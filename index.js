@@ -182,27 +182,26 @@ if (text?.toLowerCase() === "!pdf") {
     try {
       const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger: P() });
 
-      const pdfPath = `./temp-${Date.now()}.pdf`;
-
-      await sharp(buffer)
+      const pdfBuffer = await sharp(buffer)
         .resize({ width: 1240 })
         .toFormat('pdf')
-        .toFile(pdfPath);
+        .toBuffer();
 
-      const pdfBuffer = fs.readFileSync(pdfPath);
       await sock.sendMessage(from, {
         document: pdfBuffer,
         mimetype: 'application/pdf',
         fileName: 'imagem_convertida.pdf'
       });
 
-      fs.unlinkSync(pdfPath);
     } catch (err) {
-      await sock.sendMessage(from, { text: " Erro ao converter imagem em PDF." });
+      console.error('Erro ao converter para PDF:', err);
+      await sock.sendMessage(from, {
+        text: "Erro ao converter imagem em PDF."
+      });
     }
   } else {
     await sock.sendMessage(from, {
-      text: "Envie uma imagem junto com o comando !pdf para converter em arquivo PDF."
+      text: "Envie uma imagem com a legenda !pdf para converter."
     });
   }
   return;
