@@ -179,10 +179,10 @@ async function handleCommands(sock, from, msg, text) {
   }
 
 if (command.startsWith('!tdr br ')) {
-  const texto = command.slice(10).trim();
+  const texto = command.slice(8).trim();
 
   if (!texto) {
-    await sock.sendMessage(from, { text: 'Digite algo para traduzir.\nEx: !traduzir hello world' });
+    await sock.sendMessage(from, { text: 'Digite algo para traduzir.\nEx: !tdr br      hello world' });
     return;
   }
 
@@ -202,7 +202,7 @@ if (command.startsWith('!tdr br ')) {
 }
 
 if (command.startsWith('!tdr en ')) {
-  const texto = command.slice(10).trim();
+  const texto = command.slice(8).trim();
 
   if (!texto) {
     await sock.sendMessage
