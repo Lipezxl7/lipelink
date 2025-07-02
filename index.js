@@ -138,13 +138,15 @@ if (command.startsWith('!bin ')) {
 }
 
   if (command === '!menu') {
-    const menu = ` *LipeLink ✅*\n\n` +
-                 `1. !menu - Mostra esta mensagem\n` +
-                 `2. !fig - Cria figurinha de imagem\n` +
-                 `3. !cep [número] - Consulta CEP\n` +
-                 `4. !ip [endereço] - Consulta IP\n` +
-                 `5. !on - Verifica status do bot\n` +
-                 `6. !bin - vericar os 6 primeiros digitos do cartao`;
+ const menu = `📋 *Menu do LipeLink ✅*\n\n` +
+             `🟢 !on - Verifica se o bot está online\n` +
+             `📦 !cep 01001000 - Consulta CEP\n` +
+             `🌐 !ip 8.8.8.8 - Consulta informações de IP\n` +
+             `💳 !bin 411111 - Verifica dados do cartão\n` +
+             `🖼️ !fig - Cria figurinha de imagem ou vídeo\n` +
+             `❓ !menu - Mostra este menu\n` +
+             `📝 !pdf - ele transforma uma foto em pdf`;
+
     await sock.sendMessage(from, { text: menu });
     return;
   }
@@ -170,10 +172,44 @@ if (command.startsWith('!bin ')) {
         await sock.sendMessage(from, { sticker: buffer });
         return;
       } else {
-        await sock.sendMessage(from, { text: "" });
+        await sock.sendMessage(from, { text: "e a imagem??" });
         return;
       }
     }
+
+if (text?.toLowerCase() === "!pdf") {
+  if (msg.message.imageMessage) {
+    try {
+      const buffer = await downloadMediaMessage(msg, "buffer", {}, { logger: P() });
+
+      const pdfPath = `./temp-${Date.now()}.pdf`;
+
+      await sharp(buffer)
+        .resize({ width: 1240 })
+        .toFormat('pdf')
+        .toFile(pdfPath);
+
+      const pdfBuffer = fs.readFileSync(pdfPath);
+      await sock.sendMessage(from, {
+        document: pdfBuffer,
+        mimetype: 'application/pdf',
+        fileName: 'imagem_convertida.pdf'
+      });
+
+      fs.unlinkSync(pdfPath);
+    } catch (err) {
+      await sock.sendMessage(from, { text: " Erro ao converter imagem em PDF." });
+    }
+  } else {
+    await sock.sendMessage(from, {
+      text: "Envie uma imagem junto com o comando !pdf para converter em arquivo PDF."
+    });
+  }
+  return;
+}
+
+
+
 
   if (command.startsWith('!cep ')) {
     try {
