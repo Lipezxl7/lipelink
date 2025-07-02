@@ -1,6 +1,6 @@
 const { makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
 
-console.log("🔄 Iniciando bot..."); // Mensagem de teste
+console.log("Iniciando bot...");
 
 async function startBot() {
   try {
@@ -12,10 +12,10 @@ async function startBot() {
 
     sock.ev.on("connection.update", (update) => {
       if (update.qr) console.log("✔ QR Code está sendo gerado!");
-      if (update.connection === "open") console.log("✅ Conectado!");
+      if (update.connection === "open") console.log(" Conectado!");
     });
   } catch (err) {
-    console.error("❌ ERRO GRAVE:", err);
+    console.error(" ERRO GRAVE:", err);
   }
 }
 
