@@ -97,7 +97,8 @@ async function tratarComandos(sock, de, msg, txt) {
   `📦 !cep - Consulta CEP\n` +
   `🌐 !ip - Consulta informações de IP\n` +
   `💳 !bin - Verifica dados do cartão\n` +
-  `🖼️ !fig - Cria figurinha de imagem\n` +
+  `🖼️ !fig - Cria figurinha de imagem(original a imagem)\n` +
+  `🖼️ !fig2 - Cria figurinha de imagem(quadrado)\n` +
   `📝 !pdf - Transforma imagem em PDF\n` +
   `🌍 !tdr br [texto] - Traduz para Português\n` +
   `🌍 !tdr en [texto] - Traduz para Inglês\n` +
@@ -151,6 +152,26 @@ async function tratarComandos(sock, de, msg, txt) {
       if (msg.message.imageMessage) {
         const sticker = await sharp(buffer)
           .resize(512, 512, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .webp()
+          .toBuffer()
+        return sock.sendMessage(de, { sticker })
+      }
+
+      return sock.sendMessage(de, { sticker: buffer })
+    } else {
+      return sock.sendMessage(de, { text: 'cade imagem??' }) 
+    }
+  }
+
+
+
+  if (cmd === '!fig2') {
+    if (msg.message.imageMessage || msg.message.videoMessage) {
+      const buffer = await downloadMediaMessage(msg, 'buffer', {}, { logger: P() })
+
+      if (msg.message.imageMessage) {
+        const sticker = await sharp(buffer)
+          .resize(512, 512, { fit: 'cover', background: { r: 0, g: 0, b: 0, alpha: 0 } })
           .webp()
           .toBuffer()
         return sock.sendMessage(de, { sticker })
