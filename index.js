@@ -272,5 +272,5 @@ async function start() {
   })
 }
 
-console.log('bot ligando') 
+console.log('bot ligando...') 
 start()
