@@ -208,7 +208,7 @@ async function tratarComandos(sock, de, msg, txt) {
       return sock.sendMessage(de, {
         document: Buffer.from(file),
         mimetype: 'application/pdf',
-        fileName: 'lipelink.pdf'
+        fileName: '238565632896.pdf'
       })
     } catch (e) {
       return sock.sendMessage(de, { text: 'deu erro ' }) 
