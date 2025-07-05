@@ -48,10 +48,10 @@ async function buscarCEP(cep) {
 
   const msg = 
   `📦 *Resultado para ${data.cep}*\n\n` +
-    `📍 *Logradouro*: ${data.logradouro || '-'}\n` +
-    `🏘️ *Bairro*: ${data.bairro || '-'}\n` +
-    `🏙️ *Cidade*: ${data.localidade}/${data.uf}\n` +
-    `🔢 *Código IBGE*: ${data.ibge || '-'}`;
+    `📍 Logradouro: ${data.logradouro || '-'}\n` +
+    `🏘️ Bairro: ${data.bairro || '-'}\n` +
+    `🏙️ Cidade: ${data.localidade}/${data.uf}\n` +
+    `🔢 Código IBGE: ${data.ibge || '-'}`;
 
   cache.cep.set(apenasNumeros, msg)
   return msg
@@ -71,13 +71,13 @@ async function buscarIP(ip) {
 
   const info =
   `🌐 *Informações do IP ${data.query}*\n\n` +
-    `🛡️ *Status*: ${data.status}\n` +
-    `🗺️ *País*: ${data.country}\n` +
-    `🏙️ *Cidade*: ${data.city} (${data.regionName})\n` +
-    `📮 *CEP*: ${data.zip || 'N/D'}\n` +
-    `📡 *Provedor*: ${data.isp}\n` +
-    `🏢 *Organização*: ${data.org}\n` +
-    `📍 *Localização*: ${data.lat}, ${data.lon}\n` +
+    `🛡️ Status: ${data.status}\n` +
+    `🗺️ País: ${data.country}\n` +
+    `🏙️ Cidade: ${data.city} (${data.regionName})\n` +
+    `📮 CEP: ${data.zip || 'N/D'}\n` +
+    `📡 Provedor: ${data.isp}\n` +
+    `🏢 Organização: ${data.org}\n` +
+    `📍 Localização: ${data.lat}, ${data.lon}\n` +
     `🔢 AS: ${data.as}`;
 
   cache.ip.set(ip, info)
@@ -88,21 +88,21 @@ async function tratarComandos(sock, de, msg, txt) {
   const cmd = txt.trim().toLowerCase()
 
   if (cmd === '!on') {
-    return sock.sendMessage(de, { text: '*to on lendario*' }) 
+    return sock.sendMessage(de, { text: 'to on lendario' }) 
   }
 
   if (cmd === '!menu') {
-    const lista = `*LipeLink ✅*\n\n` +
-  `🟢 !on - *Verifica se o bot está online*\n` +
-  `📦 !cep - *Consulta CEP*\n` +
-  `🌐 !ip - *Consulta informações de IP*\n` +
-  `💳 !bin - *Verifica dados do cartão*\n` +
-  `🖼️ !fig - *Cria figurinha de imagem*(original a imagem)\n` +
-  `🖼️ !fig2 - *Cria figurinha de imagem*(quadrado)\n` +
-  `📝 !pdf - *Transforma imagem em PDF*\n` +
-  `🌍 !tdr br [texto] - *Traduz para Português*\n` +
-  `🌍 !tdr en [texto] - *Traduz para Inglês*\n` +
-  `❓ !menu - *Mostra este menu*`;
+    const lista = `*Menu do LipeLink ✅*\n\n` +
+  `🟢 !on - Verifica se o bot está online\n` +
+  `📦 !cep - Consulta CEP\n` +
+  `🌐 !ip - Consulta informações de IP\n` +
+  `💳 !bin - Verifica dados do cartão\n` +
+  `🖼️ !fig - Cria figurinha de imagem(original a imagem)\n` +
+  `🖼️ !fig2 - Cria figurinha de imagem(quadrado)\n` +
+  `📝 !pdf - Transforma imagem em PDF\n` +
+  `🌍 !tdr br [texto] - Traduz para Português\n` +
+  `🌍 !tdr en [texto] - Traduz para Inglês\n` +
+  `❓ !menu - Mostra este menu`;
     return sock.sendMessage(de, { text: lista })
   }
 
@@ -135,10 +135,10 @@ async function tratarComandos(sock, de, msg, txt) {
     try {
       const { data } = await axios.get(`https://lookup.binlist.net/${bin}`)
       const info = `🏦 *Informações do BIN ${bin}*\n\n` +
-        `💳 *Bandeira*: ${data.scheme?.toUpperCase() || 'Desconhecida'}\n` +
-        `🏦 *Banco*: ${data.bank?.name || 'Não disponível'}\n` +
-        `🌍 *País*: ${data.country?.name || 'Desconhecido'}\n` +
-        `💼 *Tipo*: ${data.type?.toUpperCase() || 'Desconhecido'}`;
+        `💳 Bandeira: ${data.scheme?.toUpperCase() || 'Desconhecida'}\n` +
+        `🏦 Banco: ${data.bank?.name || 'Não disponível'}\n` +
+        `🌍 País: ${data.country?.name || 'Desconhecido'}\n` +
+        `💼 Tipo: ${data.type?.toUpperCase() || 'Desconhecido'}`;
       return sock.sendMessage(de, { text: info })
     } catch {
       return sock.sendMessage(de, { text: 'bin errada ou invalida' }) 
@@ -257,7 +257,7 @@ async function start() {
       const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
       if (reason !== DisconnectReason.loggedOut) start()
     } else if (connection === 'open') {
-      console.log(' *conectado*') 
+      console.log(' conectado') 
     }
   })
 
