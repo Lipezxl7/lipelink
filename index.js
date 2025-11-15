@@ -289,11 +289,15 @@ if (cmd === 'x1 bot?') {
 
 async function start() {
   const { state, saveCreds } = await useMultiFileAuthState(authFolder)
-  
+
+
+  const logger = P({ level: "fatal" })
+
   const sock = makeWASocket({
     printQRInTerminal: false,
     auth: state,
     browser: ["Chrome (Windows)", "Chrome", "10.0"],
+    logger: logger //limpa o terminal finalmente pae
   })
 
   sock.ev.on("creds.update", saveCreds)
@@ -312,7 +316,7 @@ async function start() {
     }
 
     if (connection === "open") {
-      console.log("conectado")
+      console.log("conectado\n\n\n\n")
     }
 
     if (connection === "close") {
@@ -331,6 +335,9 @@ async function start() {
     const msg = messages[0]
     if (!msg.message || msg.key.fromMe) return
 
+    if (msg.key.remoteJid?.endsWith("@newsletter")) return
+    if (msg.key.remoteJid === "status@broadcast") return
+
     const de = msg.key.remoteJid
     const txt = pegarTextoMensagem(msg)
 
@@ -340,3 +347,4 @@ async function start() {
 
 console.log("bot ligando...")
 start()
+
