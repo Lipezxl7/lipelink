@@ -289,22 +289,45 @@ if (cmd === 'x1 bot?') {
 
 async function start() {
   const { state, saveCreds } = await useMultiFileAuthState(authFolder)
-  const sock = makeWASocket({ auth: state, logger, printQRInTerminal: true })
+  
+  const sock = makeWASocket({
+    printQRInTerminal: false,
+    auth: state,
+    browser: ["Chrome (Windows)", "Chrome", "10.0"],
+  })
 
-  sock.ev.on('creds.update', saveCreds)
+  sock.ev.on("creds.update", saveCreds)
 
-  sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
-    if (qr) qrcode.generate(qr, { small: true })
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect } = update
 
-    if (connection === 'close') {
+    if (update.qr) {
+      console.clear()
+      console.log("qr ai")
+      qrcode.generate(update.qr, { small: true })
+    }
+
+    if (connection === "connecting") {
+      console.log("bot ligando")
+    }
+
+    if (connection === "open") {
+      console.log("conectado")
+    }
+
+    if (connection === "close") {
       const reason = new Boom(lastDisconnect?.error)?.output?.statusCode
-      if (reason !== DisconnectReason.loggedOut) start()
-    } else if (connection === 'open') {
-      console.log(' conectado') 
+      if (reason === DisconnectReason.loggedOut) {
+        console.log("qr denovo")
+        fs.rmSync(authFolder, { recursive: true, force: true })
+      } else {
+        console.log("reconectando")
+        start()
+      }
     }
   })
 
-  sock.ev.on('messages.upsert', async ({ messages }) => {
+  sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0]
     if (!msg.message || msg.key.fromMe) return
 
@@ -315,5 +338,5 @@ async function start() {
   })
 }
 
-console.log('bot ligando...') 
+console.log("bot ligando...")
 start()
