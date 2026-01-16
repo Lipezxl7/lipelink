@@ -1,14 +1,21 @@
 # LipeLink - Bot WhatsApp
 
-Bot com consultas de CEP, IP e criação de figurinhas, converte imagem a pdf, traduz texto em en e pt.
+Bot que eu fiz para estudo.
 
 ## Comandos
-🟢 !on - Verifica se o bot está online`
-  `📦 !cep [10101010]- Consulta CEP`
-  `🌐 !ip [10.10.10.1]- Consulta informações de IP`
-  `💳 !bin [444444]- Verifica dados do cartão`
-  `🖼️ !fig [imagem ou video]- Cria figurinha de imagem ou vídeo`
-  `📝 !pdf [imagem]- Transforma imagem em PDF`
-  `🌍 !tdr br [texto] - Traduz para Português`
-  `🌍 !tdr en [texto] - Traduz para Inglês`
-  `❓ !menu - Mostra este menu'
+🟢 !on - Verifica se o bot está online
+📦 !cep - Consulta CEP
+⬛ !qr - Gera um QRcode
+🌐 !link - Encurtar um Link
+📖 !ler - Pega Todo texto Da Imagem
+🤖 !ia - converse com a IA
+🖌️ !bg -  Remove o fundo da imagem
+🎨 !img - Faz imagem com IA
+🎵 !mp3 - Transforma video em audio
+🖼️ !fig - Cria figurinha de imagem
+🖼️ !fig2 - Cria figurinha de imagem(quadrado)
+📝 !pdf - Transforma imagem em PDF
+🔒 !senha [digitos] - Gera Senha Aleatoria
+🌍 !tdr [texto] - Traduz Texto
+🪙 !moeda - Lista de Cotação
+❓ !menu - Mostra este menu
