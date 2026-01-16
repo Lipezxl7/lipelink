@@ -1,16 +1,31 @@
 const express = require('express');
 const app = express();
+let qrCodeImagem = null;
 
 app.get("/", (request, response) => {
   const ping = new Date();
   ping.setHours(ping.getHours() - 3);
   console.log(`Ping recebido às ${ping.getUTCHours()}:${ping.getUTCMinutes()}:${ping.getUTCSeconds()}`);
-  response.sendStatus(200);
+  
+  if (qrCodeImagem) {
+      response.send(`
+        <html>
+          <meta http-equiv="refresh" content="5">
+          <body style="display:flex; justify-content:center; align-items:center; background:#121212; height:100vh;">
+            <div style="text-align:center; color:white; font-family:sans-serif;">
+                <h1>Escaneie para conectar</h1>
+                <img src="${qrCodeImagem}" style="border:5px solid white; border-radius:10px;">
+                <p>Atualizando automaticamente...</p>
+            </div>
+          </body>
+        </html>
+      `);
+  } else {
+      response.send('<h1 style="text-align:center; margin-top:20%; font-family:sans-serif;">Bot Online! 🤖✅<br>Se não apareceu o QR, aguarde ou você já está conectado.</h1>');
+  }
 });
 
 app.listen(process.env.PORT || 5000);
-
-
 
 const crypto = require('crypto')
 if (!global.crypto) {
@@ -129,19 +144,19 @@ if (cmd== '!git') {
       
     try {
        
-        const caminhoImagem = path.join(__dirname, 'menu.jpg');
-        
-        
-        if (fs.existsSync(caminhoImagem)) {
-            const imagemLocal = fs.readFileSync(caminhoImagem);
-            return sock.sendMessage(de, { image: imagemLocal, caption: lista })
-        } else {
-            console.log('Arquivo menu.jpg não encontrado na pasta')
-            return sock.sendMessage(de, { text: lista })
-        }
+       const caminhoImagem = path.join(__dirname, 'menu.jpg');
+       
+       
+       if (fs.existsSync(caminhoImagem)) {
+           const imagemLocal = fs.readFileSync(caminhoImagem);
+           return sock.sendMessage(de, { image: imagemLocal, caption: lista })
+       } else {
+           console.log('Arquivo menu.jpg não encontrado na pasta')
+           return sock.sendMessage(de, { text: lista })
+       }
     } catch (e) {
-        console.log('Erro ao enviar imagem:', e)
-        return sock.sendMessage(de, { text: lista })
+       console.log('Erro ao enviar imagem:', e)
+       return sock.sendMessage(de, { text: lista })
     }
   }
 
@@ -595,8 +610,13 @@ async function start() {
 
   sock.ev.on("creds.update", saveCreds)
 
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect } = update
+  sock.ev.on("connection.update", async (update) => {
+    const { connection, lastDisconnect, qr } = update
+
+    if (qr) {
+        console.log("Gerando QR Code para o site...");
+        qrCodeImagem = await qrcode.toDataURL(qr);
+    }
 
     if (connection === "close") {
       const reason = lastDisconnect?.error?.output?.statusCode
@@ -609,6 +629,7 @@ async function start() {
       }
     } else if (connection === "open") {
       console.log("BCONECTADO \n")
+      qrCodeImagem = null;
     }
   })
 
