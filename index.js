@@ -42,7 +42,7 @@ const {
   fetchLatestBaileysVersion,
   delay
 } = require('@whiskeysockets/baileys')
-
+const https = require('https');
 const axios = require('axios')
 const sharp = require('sharp')
 const fs = require('fs')
@@ -384,74 +384,89 @@ if (cmd== '!git') {
       
       if (!link) return sock.sendMessage(de, { text: 'Cole o link. Ex: !baixar https://tiktok.com/...' });
 
-      
+      // 1. Limpeza do Link
       const match = link.match(/(https?:\/\/[^\s]+)/);
       if (match) link = match[0];
       if (link.includes('music.youtube.com')) link = link.replace('music.youtube.com', 'www.youtube.com');
 
       await sock.sendMessage(de, { text: 'Buscando servidor..' });
+
+      
+      const agent = new https.Agent({  
+          rejectUnauthorized: false
+      });
+
+      
       const SERVIDORES = [
           'https://cobalt.api.timelessnesses.me', 
-          'https://api.cobalt.live',            
-          'http://cobalt.154.53.58.167.nip.io', 
-          'https://cobalt-api.hyper.lol'        
+          'http://cobalt.154.53.58.167.nip.io/api/json', 
+          'https://api.cobalt.tools/api/json',    
+          'https://co.wuk.sh/api/json',           
+          'https://api.cobalt.live'               
       ];
 
       let sucesso = false;
 
       for (const api of SERVIDORES) {
           try {
-              console.log(`Tentando V10 em: ${api}`);
-
-              
-              const payload = {
-                  url: link,
-                  videoQuality: "720",
-                  downloadMode: "auto", 
-                  filenamePattern: "basic"
-              };
+              console.log(`Tentando: ${api}`);
 
              
-              const headers = {
-                  'Accept': 'application/json',
-                  'Content-Type': 'application/json',
-                  'Origin': 'https://cobalt.tools',
-                  'Referer': 'https://cobalt.tools/',
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
-              };
+              const isV7 = api.includes('/api/json');
+              let payload = {};
+
+              if (isV7) {
+                 
+                  payload = {
+                      url: link,
+                      vQuality: "720",
+                      filenamePattern: "basic",
+                      isAudioOnly: false
+                  };
+              } else {
+                  
+                  payload = {
+                      url: link,
+                      videoQuality: "720",
+                      downloadMode: "auto",
+                      filenamePattern: "basic"
+                  };
+              }
 
               const { data } = await axios.post(api, payload, { 
-                  headers: headers,
+                  httpsAgent: agent, 
+                  headers: {
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json',
+                      'Origin': 'https://cobalt.tools',
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36'
+                  },
                   timeout: 10000 
               });
-              if (data.url) {
+
+              
+              let mediaUrl = null;
+              if (data.url) mediaUrl = data.url;
+              else if (data.picker && data.picker[0]) mediaUrl = data.picker[0].url;
+
+              if (mediaUrl) {
                   await sock.sendMessage(de, { 
-                      video: { url: data.url }, 
-                      caption: '*LipeLink:* Vídeo baixado!',
+                      video: { url: mediaUrl }, 
+                      caption: ' Vídeo baixado!',
                       gifPlayback: false 
                   });
-                  
                   sucesso = true;
                   break; 
-              } 
-              
-              else if (data.picker && data.picker[0] && data.picker[0].url) {
-                   await sock.sendMessage(de, { 
-                      image: { url: data.picker[0].url }, 
-                      caption: ' *LipeLink:* Imagem baixada!'
-                  });
-                  sucesso = true;
-                  break;
               }
 
           } catch (e) {
-              const erro = e.response ? `Status ${e.response.status}` : e.message;
-              console.log(`Falha no servidor ${api}: ${erro}`);
+              const msg = e.response ? `Status ${e.response.status}` : e.message;
+              console.log(` Falha em ${api}: ${msg}`);
           }
       }
 
       if (!sucesso) {
-          return sock.sendMessage(de, { text: 'Servidores ocupados ou link inválido.' });
+          return sock.sendMessage(de, { text: 'Todos os servidores falharam. Tente novamente em 1 minuto.' });
       }
   }
   
