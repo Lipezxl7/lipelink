@@ -21,7 +21,7 @@ app.get("/", (request, response) => {
         </html>
       `);
   } else {
-      response.send('<h1 style="text-align:center; margin-top:20%; font-family:sans-serif;">Bot Online! 🤖✅<br>Se não apareceu o QR, aguarde ou você já está conectado.</h1>');
+      response.send('<h1 style="text-align:center; margin-top:20%; font-family:sans-serif;">Bot Online! ✅<br>Se não apareceu o QR, aguarde ou você já está conectado.</h1>');
   }
 });
 
@@ -339,9 +339,8 @@ if (cmd== '!git') {
 
   if (cmd.trim() === '!ia') {
       modoConversa.add(de)
-      return sock.sendMessage(de, { text: 'Modo Conversa ATIVADO. Digite !sair para encerrar.' })
+      return sock.sendMessage(de, { text: 'Modo Conversa ativado!\nDigite !sair para encerrar.' })
   }
-
   if (modoConversa.has(de)) {
       if (cmd.trim().toLowerCase() === '!sair') {
           modoConversa.delete(de)
@@ -352,37 +351,42 @@ if (cmd== '!git') {
       await sock.sendPresenceUpdate('composing', de)
 
       try {
+          // CONEXÃO COM O SEU SERVER.JS (Porta 3000)
           let conversa = historicoIA.get(de) || ''
-          const prompt = `${conversa}\nUser: ${cmd}\nAI:` 
-          const { data } = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`)
-          historicoIA.set(de, `${prompt} ${data}`)
-          return sock.sendMessage(de, { text: data })
+          const prompt = `${conversa}\nUser: ${cmd}\nAI:`
+          
+          
+          const { data } = await axios.get(`http://localhost:3000/api/ia?pergunta=${encodeURIComponent(prompt)}`)
+          
+          const resposta = data.resposta || "Erro na resposta da IA";
+          
+          historicoIA.set(de, `${prompt} ${resposta}`)
+          return sock.sendMessage(de, { text: resposta })
       } catch (e) {
-          return sock.sendMessage(de, { text: 'Erro na IA.' })
+          return sock.sendMessage(de, { text: 'Erro na IA' })
       }
   }
 
+  
   if (cmd.startsWith('!ia ')) {
       const pergunta = cmd.slice(4).trim()
 
       if (pergunta === 'limpar') {
           historicoIA.delete(de)
-          return sock.sendMessage(de, { text: 'Ok pode começar outro assunto.' })
+          return sock.sendMessage(de, { text: 'Memória limpa.' })
       }
 
-      if (!pergunta) return sock.sendMessage(de, { text: 'pergunta algo pae que eu falo pra voce usando !ia' })
+      if (!pergunta) return sock.sendMessage(de, { text: 'Pergunte algo. Ex: !ia Quem é o Neymar?' })
       
       await sock.sendPresenceUpdate('composing', de)
 
       try {
-          let conversa = historicoIA.get(de) || ''
-          const prompt = `${conversa}\nUser: ${pergunta}\nAI:`
-          const { data } = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`)
-          historicoIA.set(de, `${prompt} ${data}`)
-          return sock.sendMessage(de, { text: `IA: ${data}` })
+          // Chama o servidor local
+          const { data } = await axios.get(`http://localhost:3000/api/ia?pergunta=${encodeURIComponent(pergunta)}`)
+          
+          return sock.sendMessage(de, { text: ` *lipelink:* ${data.resposta}` })
       } catch (e) {
-          historicoIA.delete(de)
-          return sock.sendMessage(de, { text: 'Erro na IA.' })
+          return sock.sendMessage(de, { text: 'Erro na IA' })
       }
   }
 
