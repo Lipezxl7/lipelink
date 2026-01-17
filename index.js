@@ -133,6 +133,7 @@ if (cmd== '!git') {
 
       `🎵 !mp3 - Transforma video em audio\n` +
       `🖼️ !fig - Cria figurinha de imagem\n` +
+      `🖼️ !abaixar - Abaixa video sem marca d agua\n` +
       `🖼️ !fig2 - Cria figurinha de imagem(quadrado)\n` +
       `📝 !pdf - Transforma imagem em PDF\n\n\n` +
       
@@ -378,6 +379,89 @@ if (cmd== '!git') {
       }
   }
 
+  if (cmd.startsWith('!baixar ')) {
+      let link = cmd.slice(8).trim();
+      
+      if (!link) return sock.sendMessage(de, { text: 'Cole o link. Ex: !baixar https://tiktok.com/...' });
+
+     
+      const match = link.match(/(https?:\/\/[^\s]+)/);
+      if (match) link = match[0];
+      
+      
+      
+      if (link.includes('music.youtube.com')) link = link.replace('music.youtube.com', 'www.youtube.com');
+
+      await sock.sendMessage(de, { text: 'Processando..' });
+
+     
+      const SERVIDORES = [
+          'https://api.cobalt.tools/api/json', // Oficial (V7)
+          'https://co.wuk.sh/api/json',        // O melhor (V7)
+          'https://api.cobalt.live',           // Alternativa (V10)
+          'https://cobalt.zip/api/json'        // Alternativa (V7)
+      ];
+
+      let sucesso = false;
+
+      
+      for (const api of SERVIDORES) {
+          try {
+              
+              const isV7 = api.includes('/api/json');
+              
+              let payload = {};
+              
+              if (isV7) {
+                  payload = {
+                      url: link,
+                      vQuality: "720",
+                      filenamePattern: "basic",
+                      isAudioOnly: false 
+                  };
+              } else {
+                  payload = {
+                      url: link,
+                      videoQuality: "720",
+                      downloadMode: "auto"
+                  };
+              }
+
+              // Faz o pedido
+              const { data } = await axios.post(api, payload, {
+                  headers: {
+                      'Accept': 'application/json',
+                      'Content-Type': 'application/json',
+                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                  },
+                  timeout: 10000 
+              });
+              if (data.url || data.status === 'stream') {
+                  const mediaUrl = data.url;
+                  await sock.sendMessage(de, { 
+                      video: { url: mediaUrl }, 
+                      caption: ' *LipeLink:* Vídeo baixado sem marca d\'água!',
+                      gifPlayback: false 
+                  });
+                  
+                  sucesso = true;
+                  break; 
+              }
+
+          } catch (e) {
+              console.log(`Falha no servidor ${api}:`, e.message);
+          }
+      }
+
+      if (!sucesso) {
+          return sock.sendMessage(de, { text: '❌ Não consegui baixar de nenhum servidor. O link pode ser privado ou inválido.' });
+      }
+  }
+  
+  
+  
+  
+  
   if (cmd.startsWith('!img ')) {
       const pedido = cmd.slice(5).trim();
       if (!pedido) return sock.sendMessage(de, { text: ' Escreva o que você quer desenhar. Ex: !img gato de oculos' });
