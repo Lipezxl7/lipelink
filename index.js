@@ -1,3 +1,4 @@
+const https = require('https');
 const express = require('express');
 const app = express();
 let qrCodeImagem = null;
@@ -42,7 +43,6 @@ const {
   fetchLatestBaileysVersion,
   delay
 } = require('@whiskeysockets/baileys')
-const https = require('https');
 const axios = require('axios')
 const sharp = require('sharp')
 const fs = require('fs')
@@ -380,95 +380,63 @@ if (cmd== '!git') {
   }
 
   if (cmd.startsWith('!baixar ')) {
-      let link = cmd.slice(8).trim();
-      
-      if (!link) return sock.sendMessage(de, { text: 'Cole o link. Ex: !baixar https://tiktok.com/...' });
+    let link = cmd.slice(8).trim();
+    const match = link.match(/(https?:\/\/[^\s]+)/);
+    
+    if (!match) return sock.sendMessage(de, { text: 'Link inválido.' });
+    
+    link = match[0].replace('music.youtube.com', 'www.youtube.com');
 
-      // 1. Limpeza do Link
-      const match = link.match(/(https?:\/\/[^\s]+)/);
-      if (match) link = match[0];
-      if (link.includes('music.youtube.com')) link = link.replace('music.youtube.com', 'www.youtube.com');
+    await sock.sendMessage(de, { text: 'Processando...' });
 
-      await sock.sendMessage(de, { text: 'Buscando servidor..' });
+    const agent = new https.Agent({ rejectUnauthorized: false });
 
-      
-      const agent = new https.Agent({  
-          rejectUnauthorized: false
-      });
+    const SERVIDORES = [
+        'https://cobalt.api.timelessnesses.me',
+        'https://api.cobalt.live',
+        'http://cobalt.154.53.58.167.nip.io',
+        'https://api.cobalt.tools/api/json',
+        'https://cobalt-api.hyper.lol'
+    ];
 
-      
-      const SERVIDORES = [
-          'https://cobalt.api.timelessnesses.me', 
-          'http://cobalt.154.53.58.167.nip.io/api/json', 
-          'https://api.cobalt.tools/api/json',    
-          'https://co.wuk.sh/api/json',           
-          'https://api.cobalt.live'               
-      ];
+    let sucesso = false;
 
-      let sucesso = false;
+    for (const host of SERVIDORES) {
+        try {
+            const isV10 = !host.includes('/api/json');
+            
+            const payload = isV10 
+                ? { url: link, videoQuality: "720", downloadMode: "auto", filenamePattern: "basic" }
+                : { url: link, vQuality: "720", filenamePattern: "basic", isAudioOnly: false };
 
-      for (const api of SERVIDORES) {
-          try {
-              console.log(`Tentando: ${api}`);
+            const { data } = await axios.post(host, payload, { 
+                httpsAgent: agent,
+                headers: { 
+                    'Accept': 'application/json', 
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36'
+                },
+                timeout: 10000 
+            });
 
-             
-              const isV7 = api.includes('/api/json');
-              let payload = {};
+            const mediaUrl = data.url || data.picker?.[0]?.url;
 
-              if (isV7) {
-                 
-                  payload = {
-                      url: link,
-                      vQuality: "720",
-                      filenamePattern: "basic",
-                      isAudioOnly: false
-                  };
-              } else {
-                  
-                  payload = {
-                      url: link,
-                      videoQuality: "720",
-                      downloadMode: "auto",
-                      filenamePattern: "basic"
-                  };
-              }
+            if (mediaUrl) {
+                await sock.sendMessage(de, { 
+                    video: { url: mediaUrl }, 
+                    caption: 'Seu vídeo aqui!', 
+                    gifPlayback: false 
+                });
+                sucesso = true;
+                break;
+            }
+        } catch (e) {
+            continue;
+        }
+    }
 
-              const { data } = await axios.post(api, payload, { 
-                  httpsAgent: agent, 
-                  headers: {
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json',
-                      'Origin': 'https://cobalt.tools',
-                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36'
-                  },
-                  timeout: 10000 
-              });
-
-              
-              let mediaUrl = null;
-              if (data.url) mediaUrl = data.url;
-              else if (data.picker && data.picker[0]) mediaUrl = data.picker[0].url;
-
-              if (mediaUrl) {
-                  await sock.sendMessage(de, { 
-                      video: { url: mediaUrl }, 
-                      caption: ' Vídeo baixado!',
-                      gifPlayback: false 
-                  });
-                  sucesso = true;
-                  break; 
-              }
-
-          } catch (e) {
-              const msg = e.response ? `Status ${e.response.status}` : e.message;
-              console.log(` Falha em ${api}: ${msg}`);
-          }
-      }
-
-      if (!sucesso) {
-          return sock.sendMessage(de, { text: 'Todos os servidores falharam. Tente novamente em 1 minuto.' });
-      }
-  }
+    if (!sucesso) sock.sendMessage(de, { text: 'Não foi possível baixar.' });
+}
   
   
   
