@@ -133,7 +133,7 @@ if (cmd== '!git') {
 
       `🎵 !mp3 - Transforma video em audio\n` +
       `🖼️ !fig - Cria figurinha de imagem\n` +
-      `🖼️ !abaixar - Abaixa video sem marca d agua\n` +
+      `🖼️ !baixar - Abaixa video sem marca d agua\n` +
       `🖼️ !fig2 - Cria figurinha de imagem(quadrado)\n` +
       `📝 !pdf - Transforma imagem em PDF\n\n\n` +
       
@@ -382,79 +382,75 @@ if (cmd== '!git') {
   if (cmd.startsWith('!baixar ')) {
       let link = cmd.slice(8).trim();
       
-      if (!link) return sock.sendMessage(de, { text: 'Cole o link. Ex: !baixar https://tiktok.com/...' });
+      if (!link) return sock.sendMessage(de, { text: '⚠️ Cole o link. Ex: !baixar https://tiktok.com/...' });
 
-     
+      // 1. LIMPEZA DE LINK (Remove textos e duplicações)
       const match = link.match(/(https?:\/\/[^\s]+)/);
       if (match) link = match[0];
-      
-      
-      
       if (link.includes('music.youtube.com')) link = link.replace('music.youtube.com', 'www.youtube.com');
 
-      await sock.sendMessage(de, { text: 'Processando..' });
+      await sock.sendMessage(de, { text: '🚀 Buscando servidor disponível...' });
 
-     
+      // LISTA DE ELITE (Mistura de Oficiais e IPs diretos que ignoram bloqueio)
       const SERVIDORES = [
-          'https://api.cobalt.tools/api/json', // Oficial (V7)
-          'https://co.wuk.sh/api/json',        // O melhor (V7)
-          'https://api.cobalt.live',           // Alternativa (V10)
-          'https://cobalt.zip/api/json'        // Alternativa (V7)
+          'http://cobalt.154.53.58.167.nip.io/api/json', // IP Direto (Geralmente funciona)
+          'https://api.cobalt.tools/api/json',          // Oficial
+          'https://cobalt.zip/api/json',                // Alternativa 1
+          'http://45.55.204.143:9000/api/json',         // IP Alternativo
+          'https://dl.khub.ky/api/json'                 // Mirror Asiático
       ];
 
       let sucesso = false;
 
-      
+      // Tenta um por um
       for (const api of SERVIDORES) {
           try {
-              
-              const isV7 = api.includes('/api/json');
-              
-              let payload = {};
-              
-              if (isV7) {
-                  payload = {
-                      url: link,
-                      vQuality: "720",
-                      filenamePattern: "basic",
-                      isAudioOnly: false 
-                  };
-              } else {
-                  payload = {
-                      url: link,
-                      videoQuality: "720",
-                      downloadMode: "auto"
-                  };
-              }
+              console.log(`Tentando baixar por: ${api}`);
 
-              // Faz o pedido
-              const { data } = await axios.post(api, payload, {
-                  headers: {
-                      'Accept': 'application/json',
-                      'Content-Type': 'application/json',
-                      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-                  },
-                  timeout: 10000 
+              // Configuração V7 (Padrão mais aceito)
+              const payload = {
+                  url: link,
+                  vQuality: "720",
+                  filenamePattern: "basic",
+                  isAudioOnly: false
+              };
+
+              // CABEÇALHOS DE DISFARCE (Finge ser um navegador Chrome)
+              const headers = {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'Origin': 'https://cobalt.tools',
+                  'Referer': 'https://cobalt.tools/',
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+              };
+
+              const { data } = await axios.post(api, payload, { 
+                  headers: headers,
+                  timeout: 15000 // 15 segundos max
               });
-              if (data.url || data.status === 'stream') {
-                  const mediaUrl = data.url;
+
+              // Verifica se veio o link do vídeo
+              if (data.url || (data.picker && data.picker[0] && data.picker[0].url)) {
+                  const mediaUrl = data.url || data.picker[0].url;
+                  
                   await sock.sendMessage(de, { 
                       video: { url: mediaUrl }, 
-                      caption: ' *LipeLink:* Vídeo baixado sem marca d\'água!',
+                      caption: '🎥 Vídeo baixado!',
                       gifPlayback: false 
                   });
                   
                   sucesso = true;
-                  break; 
+                  break; // Conseguiu! Sai do loop.
               }
 
           } catch (e) {
-              console.log(`Falha no servidor ${api}:`, e.message);
+              // Apenas loga o erro e tenta o próximo servidor
+              console.log(`Erro no servidor ${api}:`, e.message);
           }
       }
 
       if (!sucesso) {
-          return sock.sendMessage(de, { text: '❌ Não consegui baixar de nenhum servidor. O link pode ser privado ou inválido.' });
+          return sock.sendMessage(de, { text: '❌ Todos os servidores falharam. O link pode ser privado ou o YouTube bloqueou temporariamente.' });
       }
   }
   
