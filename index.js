@@ -382,64 +382,54 @@ if (cmd== '!git') {
   if (cmd.startsWith('!baixar ')) {
     let link = cmd.slice(8).trim();
     const match = link.match(/(https?:\/\/[^\s]+)/);
-    
     if (!match) return sock.sendMessage(de, { text: 'Link inválido.' });
-    link = match[0].replace('music.youtube.com', 'www.youtube.com');
+    link = match[0];
 
     await sock.sendMessage(de, { text: 'Processando...' });
 
-    const agent = new https.Agent({ rejectUnauthorized: false });
-
-    const SERVIDORES = [
-        { url: 'https://cobalt.api.timelessnesses.me', tipo: 'v10' },
-        { url: 'https://api.cobalt.live', tipo: 'v10' },
-        { url: 'https://api.vkrdown.com/server/server.php?url=', tipo: 'vkr' },
-        { url: 'https://saas.savetube.me/download/general?url=', tipo: 'savetube' }
-    ];
-
     let sucesso = false;
 
-    for (const srv of SERVIDORES) {
-        try {
-            let mediaUrl = null;
-
-            if (srv.tipo === 'v10') {
-                const { data } = await axios.post(srv.url, {
-                    url: link, videoQuality: "720"
-                }, { httpsAgent: agent, timeout: 15000 });
-                mediaUrl = data.url || data.picker?.[0]?.url;
-            } 
-            else if (srv.tipo === 'vkr' || srv.tipo === 'savetube') {
-                const { data } = await axios.get(srv.url + encodeURIComponent(link), { timeout: 15000 });
-                mediaUrl = data.url || data.data?.url || data.result?.url;
-            }
-
-            if (mediaUrl) {
-                await sock.sendMessage(de, { 
-                    video: { url: mediaUrl }, 
-                    caption: 'Seu vídeo aqui!', 
-                    gifPlayback: false 
-                });
-                sucesso = true;
-                break;
-            }
-        } catch (e) {
-            continue;
-        }
-    }
-
-    if (!sucesso) {
-        try {
+    try {
+        if (link.includes('tiktok.com')) {
             const { data } = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(link)}`);
             if (data.data && data.data.play) {
                 await sock.sendMessage(de, { 
                     video: { url: 'https://www.tikwm.com' + data.data.play }, 
-                    caption: 'Seu vídeo aqui!', 
+                    caption: 'TikTok baixado!', 
                     gifPlayback: false 
                 });
                 sucesso = true;
             }
-        } catch (e) {}
+        } 
+        
+        if (!sucesso) {
+            const agent = new https.Agent({ rejectUnauthorized: false });
+            const SERVIDORES = [
+                'https://cobalt.api.timelessnesses.me',
+                'https://api.cobalt.live',
+                'https://cobalt.shitty.moe'
+            ];
+
+            for (const host of SERVIDORES) {
+                try {
+                    const { data } = await axios.post(host, {
+                        url: link, videoQuality: "720"
+                    }, { httpsAgent: agent, timeout: 15000 });
+
+                    if (data.url) {
+                        await sock.sendMessage(de, { 
+                            video: { url: data.url }, 
+                            caption: 'Vídeo baixado!', 
+                            gifPlayback: false 
+                        });
+                        sucesso = true;
+                        break;
+                    }
+                } catch (e) { continue; }
+            }
+        }
+    } catch (e) {
+        console.log("Erro geral:", e.message);
     }
 
     if (!sucesso) sock.sendMessage(de, { text: 'Não foi possível baixar.' });
