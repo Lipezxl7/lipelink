@@ -607,7 +607,7 @@ async function start() {
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: true,
-    browser: ["Ubuntu", "Chrome", "20.0.04"],
+    browser: ["chupeta", "Chrome", "20.0.04"],
     version,
     logger: P({ level: "silent" })
   })
