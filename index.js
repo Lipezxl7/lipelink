@@ -338,55 +338,54 @@ if (cmd== '!git') {
   }
 
   if (cmd.trim() === '!ia') {
-      modoConversa.add(de)
-      return sock.sendMessage(de, { text: 'Modo Conversa ativado!\nDigite !sair para encerrar.' })
+      modoConversa.add(de);
+      return sock.sendMessage(de, { text: 'Modo Conversa ATIVADO!\nDigite !sair para encerrar.' });
   }
+
+  // Lógica do Modo Conversa
   if (modoConversa.has(de)) {
       if (cmd.trim().toLowerCase() === '!sair') {
-          modoConversa.delete(de)
-          historicoIA.delete(de)
-          return sock.sendMessage(de, { text: 'Modo Conversa DESATIVADO.' })
+          modoConversa.delete(de);
+          historicoIA.delete(de);
+          return sock.sendMessage(de, { text: 'Modo Conversa DESATIVADO.' });
       }
 
-      await sock.sendPresenceUpdate('composing', de)
+      await sock.sendPresenceUpdate('composing', de);
 
       try {
-          // CONEXÃO COM O SEU SERVER.JS (Porta 3000)
-          let conversa = historicoIA.get(de) || ''
-          const prompt = `${conversa}\nUser: ${cmd}\nAI:`
           
-          
-          const { data } = await axios.get(`http://localhost:3000/api/ia?pergunta=${encodeURIComponent(prompt)}`)
-          
-          const resposta = data.resposta || "Erro na resposta da IA";
-          
-          historicoIA.set(de, `${prompt} ${resposta}`)
-          return sock.sendMessage(de, { text: resposta })
+          let conversa = historicoIA.get(de) || '';
+          const prompt = `${conversa}\nUser: ${cmd}\nAI:`;
+          const { data } = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
+          historicoIA.set(de, `${prompt} ${data}`);
+          return sock.sendMessage(de, { text: data });
       } catch (e) {
-          return sock.sendMessage(de, { text: 'Erro na IA' })
+          console.log('Erro na IA:', e.message);
+          return sock.sendMessage(de, { text: '(Erro na API).' });
       }
   }
 
   
   if (cmd.startsWith('!ia ')) {
-      const pergunta = cmd.slice(4).trim()
+      const pergunta = cmd.slice(4).trim();
 
       if (pergunta === 'limpar') {
-          historicoIA.delete(de)
-          return sock.sendMessage(de, { text: 'Memória limpa.' })
+          historicoIA.delete(de);
+          return sock.sendMessage(de, { text: 'Memória apagada.' });
       }
 
-      if (!pergunta) return sock.sendMessage(de, { text: 'Pergunte algo. Ex: !ia Quem é o Neymar?' })
+      if (!pergunta) return sock.sendMessage(de, { text: 'Pergunte algo. Ex: !ia Quem é o dono do mundo?' });
       
-      await sock.sendPresenceUpdate('composing', de)
+      await sock.sendPresenceUpdate('composing', de);
 
       try {
-          // Chama o servidor local
-          const { data } = await axios.get(`http://localhost:3000/api/ia?pergunta=${encodeURIComponent(pergunta)}`)
+          // CHAMA A IA DIRETO
+          const { data } = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(pergunta)}`);
           
-          return sock.sendMessage(de, { text: ` *lipelink:* ${data.resposta}` })
+          return sock.sendMessage(de, { text: `🤖 *IA:* ${data}` });
       } catch (e) {
-          return sock.sendMessage(de, { text: 'Erro na IA' })
+          console.log('Erro na IA:', e.message);
+          return sock.sendMessage(de, { text: '❌ Erro ao conectar na IA.' });
       }
   }
 
