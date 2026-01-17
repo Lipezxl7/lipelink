@@ -384,7 +384,6 @@ if (cmd== '!git') {
     const match = link.match(/(https?:\/\/[^\s]+)/);
     
     if (!match) return sock.sendMessage(de, { text: 'Link inválido.' });
-    
     link = match[0].replace('music.youtube.com', 'www.youtube.com');
 
     await sock.sendMessage(de, { text: 'Processando...' });
@@ -392,34 +391,28 @@ if (cmd== '!git') {
     const agent = new https.Agent({ rejectUnauthorized: false });
 
     const SERVIDORES = [
-        'https://cobalt.api.timelessnesses.me',
-        'https://api.cobalt.live',
-        'http://cobalt.154.53.58.167.nip.io',
-        'https://api.cobalt.tools/api/json',
-        'https://cobalt-api.hyper.lol'
+        { url: 'https://cobalt.api.timelessnesses.me', tipo: 'v10' },
+        { url: 'https://api.cobalt.live', tipo: 'v10' },
+        { url: 'https://api.vkrdown.com/server/server.php?url=', tipo: 'vkr' },
+        { url: 'https://saas.savetube.me/download/general?url=', tipo: 'savetube' }
     ];
 
     let sucesso = false;
 
-    for (const host of SERVIDORES) {
+    for (const srv of SERVIDORES) {
         try {
-            const isV10 = !host.includes('/api/json');
-            
-            const payload = isV10 
-                ? { url: link, videoQuality: "720", downloadMode: "auto", filenamePattern: "basic" }
-                : { url: link, vQuality: "720", filenamePattern: "basic", isAudioOnly: false };
+            let mediaUrl = null;
 
-            const { data } = await axios.post(host, payload, { 
-                httpsAgent: agent,
-                headers: { 
-                    'Accept': 'application/json', 
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/123.0.0.0 Safari/537.36'
-                },
-                timeout: 10000 
-            });
-
-            const mediaUrl = data.url || data.picker?.[0]?.url;
+            if (srv.tipo === 'v10') {
+                const { data } = await axios.post(srv.url, {
+                    url: link, videoQuality: "720"
+                }, { httpsAgent: agent, timeout: 15000 });
+                mediaUrl = data.url || data.picker?.[0]?.url;
+            } 
+            else if (srv.tipo === 'vkr' || srv.tipo === 'savetube') {
+                const { data } = await axios.get(srv.url + encodeURIComponent(link), { timeout: 15000 });
+                mediaUrl = data.url || data.data?.url || data.result?.url;
+            }
 
             if (mediaUrl) {
                 await sock.sendMessage(de, { 
@@ -433,6 +426,20 @@ if (cmd== '!git') {
         } catch (e) {
             continue;
         }
+    }
+
+    if (!sucesso) {
+        try {
+            const { data } = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(link)}`);
+            if (data.data && data.data.play) {
+                await sock.sendMessage(de, { 
+                    video: { url: 'https://www.tikwm.com' + data.data.play }, 
+                    caption: 'Seu vídeo aqui!', 
+                    gifPlayback: false 
+                });
+                sucesso = true;
+            }
+        } catch (e) {}
     }
 
     if (!sucesso) sock.sendMessage(de, { text: 'Não foi possível baixar.' });
