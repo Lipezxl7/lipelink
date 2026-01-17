@@ -333,16 +333,16 @@ if (cmd== '!git') {
 
     } catch (e) {
         console.log(e);
-        return sock.sendMessage(de, { text: 'Erro. Verifique se a chave da API está certa ou se acabaram os créditos.' });
+        return sock.sendMessage(de, { text: 'Erro API' });
     }
   }
 
   if (cmd.trim() === '!ia') {
       modoConversa.add(de);
-      return sock.sendMessage(de, { text: 'Modo Conversa ATIVADO!\nDigite !sair para encerrar.' });
+      historicoIA.set(de, ''); 
+      return sock.sendMessage(de, { text: ' Modo Conversa ATIVADO!\nFale comigo.\nDigite !sair para parar.' });
   }
 
-  // Lógica do Modo Conversa
   if (modoConversa.has(de)) {
       if (cmd.trim().toLowerCase() === '!sair') {
           modoConversa.delete(de);
@@ -355,37 +355,26 @@ if (cmd== '!git') {
       try {
           
           let conversa = historicoIA.get(de) || '';
+          
+          
+          if (conversa.length > 1000) {
+              conversa = conversa.slice(-1000); 
+          }
+
+          
           const prompt = `${conversa}\nUser: ${cmd}\nAI:`;
           const { data } = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(prompt)}`);
-          historicoIA.set(de, `${prompt} ${data}`);
-          return sock.sendMessage(de, { text: data });
-      } catch (e) {
-          console.log('Erro na IA:', e.message);
-          return sock.sendMessage(de, { text: '(Erro na API).' });
-      }
-  }
-
-  
-  if (cmd.startsWith('!ia ')) {
-      const pergunta = cmd.slice(4).trim();
-
-      if (pergunta === 'limpar') {
-          historicoIA.delete(de);
-          return sock.sendMessage(de, { text: 'Memória apagada.' });
-      }
-
-      if (!pergunta) return sock.sendMessage(de, { text: 'Pergunte algo. Ex: !ia Quem é o dono do mundo?' });
-      
-      await sock.sendPresenceUpdate('composing', de);
-
-      try {
-          // CHAMA A IA DIRETO
-          const { data } = await axios.get(`https://text.pollinations.ai/${encodeURIComponent(pergunta)}`);
           
-          return sock.sendMessage(de, { text: `🤖 *IA:* ${data}` });
+          
+          historicoIA.set(de, `${prompt} ${data}`);
+          
+          return sock.sendMessage(de, { text: data });
+
       } catch (e) {
-          console.log('Erro na IA:', e.message);
-          return sock.sendMessage(de, { text: '❌ Erro ao conectar na IA.' });
+          console.log('Erro IA:', e.message);
+          
+          historicoIA.set(de, ''); 
+          return sock.sendMessage(de, { text: 'Pode falar de novo?' });
       }
   }
 
