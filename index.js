@@ -382,40 +382,36 @@ if (cmd== '!git') {
   if (cmd.startsWith('!baixar ')) {
       let link = cmd.slice(8).trim();
       
-      if (!link) return sock.sendMessage(de, { text: '⚠️ Cole o link. Ex: !baixar https://tiktok.com/...' });
+      if (!link) return sock.sendMessage(de, { text: 'Cole o link. Ex: !baixar https://tiktok.com/...' });
 
-      // 1. LIMPEZA DE LINK (Remove textos e duplicações)
+      
       const match = link.match(/(https?:\/\/[^\s]+)/);
       if (match) link = match[0];
       if (link.includes('music.youtube.com')) link = link.replace('music.youtube.com', 'www.youtube.com');
 
-      await sock.sendMessage(de, { text: '🚀 Buscando servidor disponível...' });
-
-      // LISTA DE ELITE (Mistura de Oficiais e IPs diretos que ignoram bloqueio)
+      await sock.sendMessage(de, { text: 'Buscando servidor..' });
       const SERVIDORES = [
-          'http://cobalt.154.53.58.167.nip.io/api/json', // IP Direto (Geralmente funciona)
-          'https://api.cobalt.tools/api/json',          // Oficial
-          'https://cobalt.zip/api/json',                // Alternativa 1
-          'http://45.55.204.143:9000/api/json',         // IP Alternativo
-          'https://dl.khub.ky/api/json'                 // Mirror Asiático
+          'https://cobalt.api.timelessnesses.me', 
+          'https://api.cobalt.live',            
+          'http://cobalt.154.53.58.167.nip.io', 
+          'https://cobalt-api.hyper.lol'        
       ];
 
       let sucesso = false;
 
-      // Tenta um por um
       for (const api of SERVIDORES) {
           try {
-              console.log(`Tentando baixar por: ${api}`);
+              console.log(`Tentando V10 em: ${api}`);
 
-              // Configuração V7 (Padrão mais aceito)
+              
               const payload = {
                   url: link,
-                  vQuality: "720",
-                  filenamePattern: "basic",
-                  isAudioOnly: false
+                  videoQuality: "720",
+                  downloadMode: "auto", 
+                  filenamePattern: "basic"
               };
 
-              // CABEÇALHOS DE DISFARCE (Finge ser um navegador Chrome)
+             
               const headers = {
                   'Accept': 'application/json',
                   'Content-Type': 'application/json',
@@ -426,31 +422,36 @@ if (cmd== '!git') {
 
               const { data } = await axios.post(api, payload, { 
                   headers: headers,
-                  timeout: 15000 // 15 segundos max
+                  timeout: 10000 
               });
-
-              // Verifica se veio o link do vídeo
-              if (data.url || (data.picker && data.picker[0] && data.picker[0].url)) {
-                  const mediaUrl = data.url || data.picker[0].url;
-                  
+              if (data.url) {
                   await sock.sendMessage(de, { 
-                      video: { url: mediaUrl }, 
-                      caption: '🎥 Vídeo baixado!',
+                      video: { url: data.url }, 
+                      caption: '*LipeLink:* Vídeo baixado!',
                       gifPlayback: false 
                   });
                   
                   sucesso = true;
-                  break; // Conseguiu! Sai do loop.
+                  break; 
+              } 
+              
+              else if (data.picker && data.picker[0] && data.picker[0].url) {
+                   await sock.sendMessage(de, { 
+                      image: { url: data.picker[0].url }, 
+                      caption: ' *LipeLink:* Imagem baixada!'
+                  });
+                  sucesso = true;
+                  break;
               }
 
           } catch (e) {
-              // Apenas loga o erro e tenta o próximo servidor
-              console.log(`Erro no servidor ${api}:`, e.message);
+              const erro = e.response ? `Status ${e.response.status}` : e.message;
+              console.log(`Falha no servidor ${api}: ${erro}`);
           }
       }
 
       if (!sucesso) {
-          return sock.sendMessage(de, { text: '❌ Todos os servidores falharam. O link pode ser privado ou o YouTube bloqueou temporariamente.' });
+          return sock.sendMessage(de, { text: 'Servidores ocupados ou link inválido.' });
       }
   }
   
