@@ -122,28 +122,27 @@ if (cmd== '!git') {
   if (cmd === '!menu') {
     const lista = `*Menu do Lipelink ✅*\n\n` +
       `🟢 !on - Verifica se o bot está online\n` +
-      `📦 !cep - Consulta CEP\n` +
-      `⬛ !qr - Gera um QRcode\n` +
-      `🌐 !link - Encurtar um Link\n\n\n` +
+      `📦 !cep [numeros]- Consulta CEP\n` +
+      `⬛ !qr [imagem] - Gera um QRcode\n` +
+      `🌐 !link [link] - Encurtar um Link\n\n\n` +
       
       
-      `📖 !ler - Pega Todo texto Da Imagem\n` +
+      `📖 !ler [imagem] - Pega Todo texto Da Imagem\n` +
       `🤖 !ia - converse com a IA\n` +
-      `🖌️ !bg -  Remove o fundo da imagem\n` +
-      `🎨 !img - Faz imagem com IA\n\n\n` +
+      `🖌️ !bg [imagem] -  Remove o fundo da imagem\n` +
+      `🎨 !img [texto] - Faz imagem com IA\n\n\n` +
 
 
-      `🎵 !mp3 - Transforma video em audio\n` +
-      `🖼️ !fig - Cria figurinha de imagem\n` +
-      `🖼️ !baixar - Abaixa video sem marca d agua\n` +
-      `🖼️ !fig2 - Cria figurinha de imagem(quadrado)\n` +
-      `📝 !pdf - Transforma imagem em PDF\n\n\n` +
+      `🎵 !mp3 [video]- Transforma video em audio\n` +
+      `🖼️ !fig [imagem] - Cria figurinha de imagem\n` +
+      `🖼️ !fig2 [imagem] - Cria figurinha de imagem(quadrado)\n` +
+      `📝 !pdf [imagem] - Transforma imagem em PDF\n\n\n` +
       
       `🔒 !senha [digitos] - Gera Senha Aleatoria\n` +
       `🌍 !tdr [texto] - Traduz Texto\n` +
-      `    !lembrete  DD/MM/AAAA HH:MM | Mensagem - Agenda \n` +
+      `📅 !lembrete - Marcar um compromisso\n` +
       `❓ !menu - Mostra este menu\n\n` +
-      `*AVISO*: Se você for falar com a IA so precisa dar o comando (!ia) que voce entrará no modo conversa\n`;
+      `*AVISO*: Se você for falar com a IA so precisa dar o comando (!ia) que voce entrará no modo conversa, mesma coisa para !lembrete \n`;
       
     try {
        
@@ -163,36 +162,71 @@ if (cmd== '!git') {
     }
   }
 
-  if (cmd.startsWith('!lembrete ')) {
-    const partes = txt.slice(10).split('|');
-    if (partes.length < 2) return sock.sendMessage(de, { text: 'Uso: !lembrete DD/MM/AAAA HH:MM | Mensagem' });
-
-    const dataHoraInput = partes[0].trim();
-    const mensagemLembrete = partes[1].trim();
+  
+if (estadoLembrete.has(de)) {
+    const status = estadoLembrete.get(de);
     
     
-    const [dataParte, horaParte] = dataHoraInput.split(' ');
-    const [dia, mes, ano] = dataParte.split('/').map(Number);
-    const [hora, minuto] = horaParte.split(':').map(Number);
-
-    
-    const dataAlvo = new Date(ano, mes - 1, dia, hora, minuto);
-
-    
-    if (isNaN(dataAlvo.getTime()) || dataAlvo < new Date()) {
-        return sock.sendMessage(de, { text: 'Data ou hora invalida ou ja passou.' });
+    if (status.etapa === 'DIA') {
+        const dia = parseInt(txt.trim());
+        if (isNaN(dia) || dia < 1 || dia > 32) {
+            return sock.sendMessage(de, { text: 'Dia invalido. Digite apenas o numero do dia (1 a 32):' });
+        }
+        estadoLembrete.set(de, { etapa: 'HORA', dia });
+        return sock.sendMessage(de, { text: 'Para que horas deseja o lembrete? (Exemplo: 14:30):' });
     }
 
     
-    schedule.scheduleJob(dataAlvo, async () => {
-        try {
-            await sock.sendMessage(de, { text: 'AVISO DE LEMBRETE: ' + mensagemLembrete });
-        } catch (erro) {
-            console.log('Erro ao enviar o lembrete agendado:', erro);
+    if (status.etapa === 'HORA') {
+        const horaMinuto = txt.trim();
+        if (!horaMinuto.includes(':')) {
+            return sock.sendMessage(de, { text: 'Formato de hora invalido. Use o formato HH:MM:' });
         }
-    });
+        estadoLembrete.set(de, { etapa: 'MENSAGEM', dia: status.dia, hora: horaMinuto });
+        return sock.sendMessage(de, { text: 'Qual e a mensagem que deseja receber no lembrete?' });
+    }
 
-    return sock.sendMessage(de, { text: 'Lembrete agendado com sucesso para ' + dataHoraInput });
+    
+    if (status.etapa === 'MENSAGEM') {
+        const mensagemLembrete = txt.trim();
+        const { dia, hora } = status;
+
+        const agora = new Date();
+        let mes = agora.getMonth();
+        let ano = agora.getFullYear();
+
+        
+        if (dia < agora.getDate()) {
+            mes++;
+            if (mes > 11) { mes = 0; ano++; }
+        }
+
+        const [h, m] = hora.split(':').map(Number);
+        const dataAlvo = new Date(ano, mes, dia, h, m);
+
+        if (isNaN(dataAlvo.getTime()) || dataAlvo < agora) {
+            estadoLembrete.delete(de);
+            return sock.sendMessage(de, { text: 'Erro: O horario ja passou ou e invalido. Agendamento cancelado.' });
+        }
+
+        
+        schedule.scheduleJob(dataAlvo, async () => {
+            try {
+                await sock.sendMessage(de, { text: '*AVISO DE LEMBRETE:* ' + mensagemLembrete });
+            } catch (e) {
+                console.log('Erro ao enviar lembrete agendado:', e);
+            }
+        });
+
+        estadoLembrete.delete(de);
+        return sock.sendMessage(de, { text: `Lembrete configurado com sucesso para o dia ${dia}/${mes + 1}/${ano} as ${hora}.` });
+    }
+}
+
+
+if (cmd === '!lembrete') {
+    estadoLembrete.set(de, { etapa: 'DIA' });
+    return sock.sendMessage(de, { text: 'Para qual dia deseja marcar o lembrete? (Digite apenas o numero do dia):' });
 }
   
   
@@ -400,61 +434,6 @@ if (cmd== '!git') {
           return sock.sendMessage(de, { text: 'erro' });
       }
   }
-  if (cmd.startsWith('!baixar ')) {
-    let link = cmd.slice(8).trim();
-    const match = link.match(/(https?:\/\/[^\s]+)/);
-    if (!match) return sock.sendMessage(de, { text: 'Link inválido.' });
-    link = match[0];
-
-    await sock.sendMessage(de, { text: 'Processando...' });
-
-    let sucesso = false;
-
-    try {
-        if (link.includes('tiktok.com')) {
-            const { data } = await axios.get(`https://www.tikwm.com/api/?url=${encodeURIComponent(link)}`, { httpsAgent: agent });
-            if (data.data && data.data.play) {
-                await sock.sendMessage(de, { 
-                    video: { url: 'https://www.tikwm.com' + data.data.play }, 
-                    caption: 'TikTok baixado!', 
-                    gifPlayback: false 
-                });
-                sucesso = true;
-            }
-        } 
-        
-        if (!sucesso) {
-            const agentDownload = new https.Agent({ rejectUnauthorized: false });
-            const SERVIDORES = [
-                'https://api.cobalt.live',
-                'https://cobalt.api.timelessnesses.me'
-            ];
-
-            for (const host of SERVIDORES) {
-                try {
-                    const { data } = await axios.post(host, {
-                        url: link, videoQuality: "720"
-                    }, { httpsAgent: agentDownload, timeout: 15000 });
-
-                    if (data.url) {
-                        await sock.sendMessage(de, { 
-                            video: { url: data.url }, 
-                            caption: 'Vídeo baixado!', 
-                            gifPlayback: false 
-                        });
-                        sucesso = true;
-                        break;
-                    }
-                } catch (e) { continue; }
-            }
-        }
-    } catch (e) {
-        console.log("Erro geral:", e.message);
-    }
-
-    if (!sucesso) sock.sendMessage(de, { text: 'Não foi possível baixar.' });
-}
-  
   
   if (cmd.startsWith('!img ')) {
       const pedido = cmd.slice(5).trim();
@@ -485,35 +464,7 @@ if (cmd== '!git') {
     }
   }
 
-  if (cmd === '!moeda' || cmd === '!coins') {
-      try {
-          await sock.sendMessage(de, { text: '🔄 Buscando cotações atualizadas...' });
-
-          const { data } = await axios.get('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,BTC-BRL,ETH-BRL,SOL-BRL', {
-              httpsAgent: agent,
-              headers: { 
-                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                  'Accept': 'application/json'
-              },
-              timeout: 15000
-          });
-
-          const usd = data.USDBRL;
-          const btc = data.BTCBRL; 
-
-          const resposta = `*COTAÇÃO DO MERCADO*\n` +
-                           `_(Valores em Reais R$)_\n\n` +
-                           `🇺🇸 *Dólar:* R$ ${parseFloat(usd.bid).toFixed(2)}\n` +
-                           `₿ *Bitcoin:* R$ ${parseFloat(btc.bid).toLocaleString('pt-BR')}\n\n` +
-                           `📊 *Variação:* ${usd.pctChange}%`;
-
-          return sock.sendMessage(de, { text: resposta });
-
-      } catch (e) {
-          console.error('Erro Cotação:', e.message);
-          return sock.sendMessage(de, { text: 'Erro ao buscar cotação no Render. Verifique os logs.' });
-      }
-  }
+  
 
   if (cmd === '!fig') {
     if (msg.message.imageMessage || msg.message.videoMessage) {
