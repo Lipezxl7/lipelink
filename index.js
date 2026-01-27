@@ -47,6 +47,7 @@ const axios = require('axios')
 const sharp = require('sharp')
 const fs = require('fs')
 const schedule = require('node-schedule');
+const estadoLembrete = new Map();
 const P = require('pino')
 const { PDFDocument } = require('pdf-lib')
 const ffmpeg = require('fluent-ffmpeg')
