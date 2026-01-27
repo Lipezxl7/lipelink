@@ -46,6 +46,7 @@ const {
 const axios = require('axios')
 const sharp = require('sharp')
 const fs = require('fs')
+const schedule = require('node-schedule');
 const P = require('pino')
 const { PDFDocument } = require('pdf-lib')
 const ffmpeg = require('fluent-ffmpeg')
@@ -140,7 +141,7 @@ if (cmd== '!git') {
       
       `🔒 !senha [digitos] - Gera Senha Aleatoria\n` +
       `🌍 !tdr [texto] - Traduz Texto\n` +
-      `🪙 !moeda - Lista de Cotação\n` +
+      `    !lembrete  DD/MM/AAAA HH:MM | Mensagem - Agenda \n` +
       `❓ !menu - Mostra este menu\n\n` +
       `*AVISO*: Se você for falar com a IA so precisa dar o comando (!ia) que voce entrará no modo conversa\n`;
       
@@ -162,6 +163,39 @@ if (cmd== '!git') {
     }
   }
 
+  if (cmd.startsWith('!lembrete ')) {
+    const partes = txt.slice(10).split('|');
+    if (partes.length < 2) return sock.sendMessage(de, { text: 'Uso: !lembrete DD/MM/AAAA HH:MM | Mensagem' });
+
+    const dataHoraInput = partes[0].trim();
+    const mensagemLembrete = partes[1].trim();
+    
+    
+    const [dataParte, horaParte] = dataHoraInput.split(' ');
+    const [dia, mes, ano] = dataParte.split('/').map(Number);
+    const [hora, minuto] = horaParte.split(':').map(Number);
+
+    
+    const dataAlvo = new Date(ano, mes - 1, dia, hora, minuto);
+
+    
+    if (isNaN(dataAlvo.getTime()) || dataAlvo < new Date()) {
+        return sock.sendMessage(de, { text: 'Data ou hora invalida ou ja passou.' });
+    }
+
+    
+    schedule.scheduleJob(dataAlvo, async () => {
+        try {
+            await sock.sendMessage(de, { text: 'AVISO DE LEMBRETE: ' + mensagemLembrete });
+        } catch (erro) {
+            console.log('Erro ao enviar o lembrete agendado:', erro);
+        }
+    });
+
+    return sock.sendMessage(de, { text: 'Lembrete agendado com sucesso para ' + dataHoraInput });
+}
+  
+  
   if (cmd.startsWith('!senha')) {
       
       let tamanho = parseInt(cmd.slice(6).trim());
@@ -336,12 +370,6 @@ if (cmd== '!git') {
     }
   }
 
-  if (cmd.trim() === '!ia') {
-      modoConversa.add(de);
-      historicoIA.set(de, []); 
-      return sock.sendMessage(de, { text: ' Modo Conversa ATIVADO!\nFale comigo.\nDigite !sair para parar.' });
-  }
-
   if (modoConversa.has(de) && !txt.startsWith('!')) {
       if (cmd.trim().toLowerCase() === '!sair') {
           modoConversa.delete(de);
@@ -352,38 +380,26 @@ if (cmd== '!git') {
       await sock.sendPresenceUpdate('composing', de);
 
       try {
-          let mensagens = historicoIA.get(de) || [];
-          mensagens.push({ role: "user", content: txt });
+          
+          const meuPrompt = "voce e uma ia com nome de lipe, sua funcao e ser a melhor ia do mundo usando toda sua sabedoria para responder as perguntas do usuario.";
+          
+          
+          const urlIA = `https://text.pollinations.ai/${encodeURIComponent(txt)}?system=${encodeURIComponent(meuPrompt)}`;
 
-          const responseIA = await axios.post('https://api.x.ai/v1/chat/completions', {
-              model: "grok-beta",
-              messages: [
-                  { role: "system", content: "Você é o Lipelink AI, um assistente prestativo." },
-                  ...mensagens
-              ]
-          }, {
-              headers: {
-                  'Authorization': `Bearer ${process.env.GROK_API_KEY}`,
-                  'Content-Type': 'application/json'
-              },
+          const responseIA = await axios.get(urlIA, {
               httpsAgent: agent,
               timeout: 40000
           });
 
-          const respostaGrok = responseIA.data.choices[0].message.content;
-          mensagens.push({ role: "assistant", content: respostaGrok });
-          
-          if (mensagens.length > 8) mensagens.shift(); 
-          historicoIA.set(de, mensagens);
+          const resposta = responseIA.data;
 
-          return sock.sendMessage(de, { text: respostaGrok });
+          return sock.sendMessage(de, { text: "Lipe: ",resposta });
 
       } catch (e) {
-          console.log('Erro Grok:', e.response?.data || e.message);
-          return sock.sendMessage(de, { text: 'Desculpe, erro ao falar com o Grok no Render. Verifique sua chave.' });
+          console.log('Erro na ia:', e.message);
+          return sock.sendMessage(de, { text: 'erro' });
       }
   }
-
   if (cmd.startsWith('!baixar ')) {
     let link = cmd.slice(8).trim();
     const match = link.match(/(https?:\/\/[^\s]+)/);
