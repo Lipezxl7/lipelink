@@ -108,7 +108,7 @@ async function buscarCEP(cep) {
 
 async function tratarComandos(sock, de, msg, txt) {
   const cmd = txt.trim().toLowerCase()
-  const agent = new https.Agent({ rejectUnauthorized: false });
+  const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: true });
 
 if (cmd== '!git') {
   return sock.sendMessage(de, { text: 'https://github.com/Lipezxl7/lipelink'})
@@ -358,7 +358,7 @@ if (cmd== '!git') {
           const responseIA = await axios.post('https://api.x.ai/v1/chat/completions', {
               model: "grok-beta",
               messages: [
-                  { role: "system", content: "Você é o Lipelink AI." },
+                  { role: "system", content: "Você é o Lipelink AI, um assistente prestativo." },
                   ...mensagens
               ]
           }, {
@@ -367,20 +367,20 @@ if (cmd== '!git') {
                   'Content-Type': 'application/json'
               },
               httpsAgent: agent,
-              timeout: 30000
+              timeout: 40000
           });
 
           const respostaGrok = responseIA.data.choices[0].message.content;
           mensagens.push({ role: "assistant", content: respostaGrok });
           
-          if (mensagens.length > 10) mensagens.shift(); 
+          if (mensagens.length > 8) mensagens.shift(); 
           historicoIA.set(de, mensagens);
 
           return sock.sendMessage(de, { text: respostaGrok });
 
       } catch (e) {
           console.log('Erro Grok:', e.response?.data || e.message);
-          return sock.sendMessage(de, { text: 'Erro ao falar com o Grok.' });
+          return sock.sendMessage(de, { text: 'Desculpe, erro ao falar com o Grok no Render. Verifique sua chave.' });
       }
   }
 
@@ -408,6 +408,7 @@ if (cmd== '!git') {
         } 
         
         if (!sucesso) {
+            const agentDownload = new https.Agent({ rejectUnauthorized: false });
             const SERVIDORES = [
                 'https://api.cobalt.live',
                 'https://cobalt.api.timelessnesses.me'
@@ -417,7 +418,7 @@ if (cmd== '!git') {
                 try {
                     const { data } = await axios.post(host, {
                         url: link, videoQuality: "720"
-                    }, { httpsAgent: agent, timeout: 15000 });
+                    }, { httpsAgent: agentDownload, timeout: 15000 });
 
                     if (data.url) {
                         await sock.sendMessage(de, { 
@@ -437,9 +438,6 @@ if (cmd== '!git') {
 
     if (!sucesso) sock.sendMessage(de, { text: 'Não foi possível baixar.' });
 }
-  
-  
-  
   
   
   if (cmd.startsWith('!img ')) {
@@ -475,42 +473,29 @@ if (cmd== '!git') {
       try {
           await sock.sendMessage(de, { text: '🔄 Buscando cotações atualizadas...' });
 
-          
           const { data } = await axios.get('https://economia.awesomeapi.com.br/last/USD-BRL,EUR-BRL,GBP-BRL,BTC-BRL,ETH-BRL,SOL-BRL', {
               httpsAgent: agent,
-              headers: { 'User-Agent': 'Mozilla/5.0' }
+              headers: { 
+                  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                  'Accept': 'application/json'
+              },
+              timeout: 15000
           });
 
-          
           const usd = data.USDBRL;
-          const eur = data.EURBRL;
-          const gbp = data.GBPBRL; 
-          
           const btc = data.BTCBRL; 
-          const eth = data.ETHBRL; 
-          const sol = data.SOLBRL; 
 
           const resposta = `*COTAÇÃO DO MERCADO*\n` +
                            `_(Valores em Reais R$)_\n\n` +
-                           
-                           `*MOEDAS MUNDIAIS:*\n` +
                            `🇺🇸 *Dólar:* R$ ${parseFloat(usd.bid).toFixed(2)}\n` +
-                           `🇪🇺 *Euro:* R$ ${parseFloat(eur.bid).toFixed(2)}\n` +
-                           `🇬🇧 *Libra:* R$ ${parseFloat(gbp.bid).toFixed(2)}\n\n` +
-
-                           ` *CRIPTOMOEDAS:*\n` +
-                           ` *Bitcoin:* R$ ${parseFloat(btc.bid).toLocaleString('pt-BR')}\n` +
-                           ` *Ethereum:* R$ ${parseFloat(eth.bid).toLocaleString('pt-BR')}\n` +
-                           ` *Solana:* R$ ${parseFloat(sol.bid).toLocaleString('pt-BR')}\n\n` +
-
-                           `📊 *Variação (24h):*\n` +
-                           `Dólar: ${usd.pctChange}% | BTC: ${btc.pctChange}%`;
+                           `₿ *Bitcoin:* R$ ${parseFloat(btc.bid).toLocaleString('pt-BR')}\n\n` +
+                           `📊 *Variação:* ${usd.pctChange}%`;
 
           return sock.sendMessage(de, { text: resposta });
 
       } catch (e) {
-          console.log(e);
-          return sock.sendMessage(de, { text: 'Erro ao buscar cotação' });
+          console.error('Erro Cotação:', e.message);
+          return sock.sendMessage(de, { text: 'Erro ao buscar cotação no Render. Verifique os logs.' });
       }
   }
 
@@ -627,28 +612,20 @@ if (cmd== '!git') {
               
               const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${lang}&dt=t&q=${encodeURIComponent(textoOriginal)}`
               const { data } = await axios.get(url)
-              
-              
               const textoTraduzido = data[0][0][0]
-
               await sock.sendMessage(de, { text: `🔄 ${textoTraduzido}` })
           } catch (e) {
               await sock.sendMessage(de, { text: 'Erro ao traduzir.' })
           }
-
           estadoTraducao.delete(de) 
           return 
       }
   }
 
-  
   if (cmd.startsWith('!tdr ')) {
       const texto = cmd.slice(5).trim()
-      
       if (!texto) return sock.sendMessage(de, { text: 'Escreva o texto. Ex: !tdr Hello World' })
-
       estadoTraducao.set(de, texto)
-
       const menu = `*Para qual idioma?*\n\n1. 🇧🇷 Português\n2. 🇺🇸 Inglês\n3. 🇪🇸 Espanhol\n\nDigite o número:`
       return sock.sendMessage(de, { text: menu })
   }
@@ -657,8 +634,6 @@ if (cmd== '!git') {
 async function start() {
   const { state, saveCreds } = await useMultiFileAuthState(authFolder)
   const { version } = await fetchLatestBaileysVersion()
-  const meuNumero = "5521965495577" 
-
   const sock = makeWASocket({
     auth: state,
     printQRInTerminal: true,
@@ -679,7 +654,6 @@ async function start() {
 
     if (connection === "close") {
       const reason = lastDisconnect?.error?.output?.statusCode
-
       if (reason !== DisconnectReason.loggedOut) {
         console.log("Reconectando...")
         start()
@@ -695,13 +669,8 @@ async function start() {
   sock.ev.on("messages.upsert", async ({ messages }) => {
     const msg = messages[0]
     if (!msg.message || msg.key.fromMe) return
-
-    if (msg.key.remoteJid?.endsWith("@newsletter")) return
-    if (msg.key.remoteJid === "status@broadcast") return
-
     const de = msg.key.remoteJid
     const txt = pegarTextoMensagem(msg)
-
     if (txt) await tratarComandos(sock, de, msg, txt)
   })
 }
