@@ -44,9 +44,6 @@ const logger = P({ level: 'silent' });
 // Configurações de Banco e API
 const MONGO_URL = process.env.MONGODB_URI || "mongodb+srv://ylipe:%40Senha6614@cluster0.k9yi2p9.mongodb.net/?appName=Cluster0";
 const removeBgKey = process.env.removeBgKey;
-const chavesEleven = [
-   'sk_f250c257ef5fdf2255f737393334d9a49cff9c393523f466'
-];
 let chaveAtualIndex = 0;
 let qrCodeImagem = null;
 
@@ -572,49 +569,24 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
         }
     }
     // Tradutor Humanizado
+    
     if (cmd.startsWith('!ta ')) {
-        const textoAudio = txt.slice(4).trim();
-        if (!textoAudio) return sock.sendMessage(de, { text: 'O que eu devo falar?' });
-                        // id de voz
-        const voiceId = "21m00Tcm4TlvDq8ikWAM";
-        const gerarComRodizio = async () => {
-            try {
-                if (!chavesEleven[chaveAtualIndex]) {
-                    throw new Error("SEM_CHAVES_VALIDAS");
-                }
-                const response = await axios({
-                    method: 'post',
-                    url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-                    data: {
-                        text: textoAudio,
-                        model_id: "eleven_multilingual_v2", // modelo avancado
-                        voice_settings: { stability: 0.5, similarity_boost: 0.5 }
-                    },
-                    headers: {
-                        'Accept': 'audio/mpeg',
-                        'xi-api-key': chavesEleven[chaveAtualIndex].trim(),
-                        'Content-Type': 'application/json'
-                    },
-                    responseType: 'arraybuffer'
-                });
-                await sock.sendMessage(de, {
-                    audio: Buffer.from(response.data),
-                    mimetype: 'audio/mp4',
-                    ptt: true
-                });
-            } catch (e) {
-                const status = e.response ? e.response.status : 0;
-                if ((status === 402 || status === 401 || status === 404 || status === 429) && chaveAtualIndex < chavesEleven.length - 1) {
-                    console.log(`Erro ${status} na conta ${chaveAtualIndex + 1}. Tentando proxima chave...`);
-                    chaveAtualIndex++;
-                    return gerarComRodizio();
-                } else {
-                    console.log("Erro Final ElevenLabs:", e.message);
-                    return sock.sendMessage(de, { text: 'Erro ao gerar audio. Todas as chaves estao sem saldo ou invalidas.' });
-                }
-            }
-        };
-        gerarComRodizio();
+        const texto = textoSemComando;
+        if (!texto) return sock.sendMessage(de, { text: ' O que devo falar?' });
+
+        try {
+            const googleURL = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=pt&q=${encodeURIComponent(texto)}`;
+
+            await sock.sendMessage(de, { 
+                audio: { url: googleURL }, 
+                mimetype: 'audio/mp4', 
+                ptt: true 
+            });
+
+        } catch (e) {
+            console.log(e);
+            return sock.sendMessage(de, { text: 'Erro no áudio.' });
+        }
     }
 
     // 2.3 Utilidades
