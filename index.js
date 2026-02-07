@@ -1015,7 +1015,8 @@ if (cmd === '!inbox') {
 
 async function start() {
     console.log("Conectando ao MongoDB...");
-    const mongoClient = new MongoClient(MONGO_URL);
+    const mongoClient = new MongoClient(MONGO_URL, {
+    family: 4,});
     await mongoClient.connect();
     console.log("MongoDB Conectado!");
     // Salvando no mongodb
