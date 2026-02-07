@@ -23,7 +23,8 @@ const {
     DisconnectReason, 
     downloadMediaMessage, 
     fetchLatestBaileysVersion, 
-    BufferJSON, 
+    BufferJSON,
+    useMultiFileAuthState, 
     delay 
 } = require('@whiskeysockets/baileys');
 
@@ -996,7 +997,7 @@ async function start() {
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
-    const { state, saveCreds } = await useMongoDBAuthState(authCollection);
+    const { state, saveCreds } = await useMultiFileAuthState('auth_');
 
     // Recuperar lembretes
     const lembretesAntigos = await lembretesCollection.find({}).toArray();
@@ -1006,7 +1007,7 @@ async function start() {
     const sock = makeWASocket({
         auth: state,
         printQRInTerminal: true,
-        browser: ["Lipelink", "Chrome", "20.0.04"],
+        browser: ["Lipelink", "Chrome", "10.0"],
         version,
         logger: P({ level: "silent" })
     });
