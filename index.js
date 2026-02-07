@@ -993,7 +993,6 @@ async function start() {
     await mongoClient.connect();
     
     const db = mongoClient.db("whatsapp_bot");
-    const authCollection = db.collection("auth_sessions_v3"); 
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
