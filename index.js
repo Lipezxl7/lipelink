@@ -989,11 +989,12 @@ if (cmd === '!inbox') {
 // INICIALIZAÇÃO 
 
 async function start() {
-    console.log("Iniciando Bot...");
+    console.log("🔄 Iniciando Bot...");
 
+    
     const nomePastaSessao = 'auth_sessao_blindada';
     if (fs.existsSync(nomePastaSessao)) {
-        console.log("Limpando sessão...");
+        console.log(" Limpando sessão antiga...");
         fs.rmSync(nomePastaSessao, { recursive: true, force: true });
     }
 
@@ -1018,25 +1019,23 @@ async function start() {
         
         auth: {
             creds: state.creds,
-            
+            // O makeCacheableSignalKeyStore impede que as chaves se percam
             keys: makeCacheableSignalKeyStore(state.keys, P({ level: "silent" })),
         },
         generateHighQualityLinkPreview: true,
-        syncFullHistory: false, 
+        syncFullHistory: false, // Deixa false para não travar baixando conversa antiga
         connectTimeoutMs: 60000,
     });
 
-    // Reagendar lembretes com o socket ativo
+    // Lembretes...
+    const lembretesAntigos = await lembretesCollection.find({}).toArray();
     lembretesAntigos.forEach(lembrete => {
         const dataAlvo = new Date(lembrete.dataAlvo);
         if (dataAlvo > new Date()) {
             schedule.scheduleJob(dataAlvo, async () => {
-                await sock.sendMessage(lembrete.chatId, { text: '*AVISO DE LEMBRETE RECUPERADO:* ' + lembrete.mensagem });
+                await sock.sendMessage(lembrete.chatId, { text: '⏰ *LEMBRETE:* ' + lembrete.mensagem });
                 await lembretesCollection.deleteOne({ _id: lembrete._id });
             });
-        } else {
-            sock.sendMessage(lembrete.chatId, { text: '*LEMBRETE ATRASADO:* ' + lembrete.mensagem });
-            lembretesCollection.deleteOne({ _id: lembrete._id });
         }
     });
 
@@ -1046,7 +1045,7 @@ async function start() {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log("Gerando QR Code para o site...");
+            console.log("Escaneie o QR Code");
             qrCodeImagem = await qrcode.toDataURL(qr);
         }
 
@@ -1056,10 +1055,11 @@ async function start() {
                 console.log("Reconectando...");
                 start();
             } else {
-                console.log("Sessão expirada. Apague a pasta 'auth'.");
+                console.log("Reiniciando...");
+                start();
             }
         } else if (connection === "open") {
-            console.log("CONECTADO \n");
+            console.log("BCONECTADO");
             qrCodeImagem = null;
         }
     });
@@ -1069,6 +1069,7 @@ async function start() {
         if (!msg.message || msg.key.fromMe) return;
         const de = msg.key.remoteJid;
         const txt = pegarTextoMensagem(msg);
+        
         if (txt) await tratarComandos(sock, de, msg, txt, lembretesCollection, historicoCollection);
     });
 }
