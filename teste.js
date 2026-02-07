@@ -2,7 +2,7 @@ const axios = require('axios');
 const fs = require('fs');
 
 // --- CONFIGURAÇÃO ---
-const MINHA_KEY = "7e660ef106416f3f8a37cd8aa7702e53164586e694d594a405c328979df12bb8"; // Cole a chave que deu "FUNCIONANDO" no teste anterior
+const MINHA_KEY = "sk_f250c257ef5fdf2255f737393334d9a49cff9c393523f466"; // Cole a chave que deu "FUNCIONANDO" no teste anterior
 const VOICE_ID = "21m00Tcm4TlvDq8ikWAM"; // ID da Rachel (Padrão)
 const MODEL_ID = "eleven_multilingual_v2"; // Modelo que estamos usando
 // --------------------
@@ -74,3 +74,10 @@ diagnosticoCompleto();
 
 
 
+const listaChaves = [
+        { nome: "KEY 1", key: process.env.ELEVENLABS_API_KEY1 },
+        { nome: "KEY 2", key: process.env.ELEVENLABS_API_KEY2 },
+        { nome: "KEY 3", key: process.env.ELEVENLABS_API_KEY3 },
+        { nome: "KEY 4", key: process.env.ELEVENLABS_API_KEY4 },
+        { nome: "KEY 5", key: process.env.ELEVENLABS_API_KEY5 }
+    ];

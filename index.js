@@ -45,10 +45,7 @@ const logger = P({ level: 'silent' });
 const MONGO_URL = process.env.MONGODB_URI || "mongodb+srv://ylipe:%40Senha6614@cluster0.k9yi2p9.mongodb.net/?appName=Cluster0";
 const removeBgKey = process.env.removeBgKey;
 const chavesEleven = [
-   '7e660ef106416f3f8a37cd8aa7702e53164586e694d594a405c328979df12bb8',
-    '58a338d232f8c0cb81ba24c3ecd15112f5b0028700273c9fe66186a328169c62',
-    'a205d7bc6f4a81ea2c87e43a1824865dd12d379fff19e2616e88c2ba501a919e',
-    '0a8c0707696d42560021aa128d76b08d735f045cf3023d3e50d6f709f0282b87'
+   'sk_f250c257ef5fdf2255f737393334d9a49cff9c393523f466'
 ];
 let chaveAtualIndex = 0;
 let qrCodeImagem = null;
