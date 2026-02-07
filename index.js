@@ -579,7 +579,7 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
         const textoAudio = txt.slice(4).trim();
         if (!textoAudio) return sock.sendMessage(de, { text: 'O que eu devo falar?' });
                         // id de voz
-        const voiceId = "rMwcnNkYjU42aYnT4R2G";
+        const voiceId = "21m00Tcm4TlvDq8ikWAM";
         const gerarComRodizio = async () => {
             try {
                 if (!chavesEleven[chaveAtualIndex]) {
@@ -590,7 +590,7 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
                     url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
                     data: {
                         text: textoAudio,
-                        model_id: "eleven_v3", // modelo avancado
+                        model_id: "eleven_multilingual_v2", // modelo avancado
                         voice_settings: { stability: 0.5, similarity_boost: 0.5 }
                     },
                     headers: {
