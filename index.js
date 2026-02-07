@@ -24,7 +24,8 @@ const {
     downloadMediaMessage, 
     fetchLatestBaileysVersion, 
     BufferJSON,
-    useMultiFileAuthState, 
+    useMultiFileAuthState,
+    makeCacheableSignalKeyStore, 
     delay 
 } = require('@whiskeysockets/baileys');
 
@@ -988,7 +989,15 @@ if (cmd === '!inbox') {
 // INICIALIZAÇÃO 
 
 async function start() {
-    console.log("Conectando ao MongoDB...");
+    console.log("Iniciando Bot...");
+
+    const nomePastaSessao = 'auth_sessao_blindada';
+    if (fs.existsSync(nomePastaSessao)) {
+        console.log("Limpando sessão...");
+        fs.rmSync(nomePastaSessao, { recursive: true, force: true });
+    }
+
+    console.log("Conectando ao MongoDB (Dados)...");
     const mongoClient = new MongoClient(MONGO_URL, { family: 4 });
     await mongoClient.connect();
     
@@ -996,19 +1005,25 @@ async function start() {
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
-    const { state, saveCreds } = await useMultiFileAuthState('auth_novo');
+    
+    const { state, saveCreds } = await useMultiFileAuthState(nomePastaSessao);
 
-    // Recuperar lembretes
-    const lembretesAntigos = await lembretesCollection.find({}).toArray();
-
-    // Iniciar Baileys
     const { version } = await fetchLatestBaileysVersion();
+    
     const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: true,
-        browser: ["Lipelink", "Chrome", "10.0"],
         version,
-        logger: P({ level: "silent" })
+        logger: P({ level: "silent" }),
+        printQRInTerminal: true,
+        browser: ["LipeBot", "Chrome", "10.0"],
+        
+        auth: {
+            creds: state.creds,
+            
+            keys: makeCacheableSignalKeyStore(state.keys, P({ level: "silent" })),
+        },
+        generateHighQualityLinkPreview: true,
+        syncFullHistory: false, 
+        connectTimeoutMs: 60000,
     });
 
     // Reagendar lembretes com o socket ativo
