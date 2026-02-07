@@ -570,22 +570,26 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
     }
     // Tradutor Humanizado
     
+    // Tradutor Humanizado (CORRIGIDO)
     if (cmd.startsWith('!ta ')) {
-        const texto = textoSemComando;
-        if (!texto) return sock.sendMessage(de, { text: ' O que devo falar?' });
+        // CORREÇÃO AQUI: Criamos a variável pegando tudo depois do "!ta "
+        const texto = txt.slice(4).trim(); 
+        
+        if (!texto) return sock.sendMessage(de, { text: ' O que devo falar? Digite: !ta Olá mundo' });
 
         try {
+            // URL do Google TTS
             const googleURL = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=pt&q=${encodeURIComponent(texto)}`;
 
             await sock.sendMessage(de, { 
                 audio: { url: googleURL }, 
                 mimetype: 'audio/mp4', 
-                ptt: true 
+                ptt: true // Envia como nota de voz (azulzinha)
             });
 
         } catch (e) {
             console.log(e);
-            return sock.sendMessage(de, { text: 'Erro no áudio.' });
+            return sock.sendMessage(de, { text: ' Erro ao gerar o áudio.' });
         }
     }
 
