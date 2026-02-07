@@ -988,13 +988,11 @@ if (cmd === '!inbox') {
 
 async function start() {
     console.log("Conectando ao MongoDB...");
-    const mongoClient = new MongoClient(MONGO_URL, {
-    family: 4,});
+    const mongoClient = new MongoClient(MONGO_URL, { family: 4 });
     await mongoClient.connect();
-    console.log("MongoDB Conectado!");
-    // Salvando no mongodb
+    
     const db = mongoClient.db("whatsapp_bot");
-    const authCollection = db.collection("auth_sessions");
+    const authCollection = db.collection("auth_sessions_v3"); 
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
