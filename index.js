@@ -996,7 +996,7 @@ async function start() {
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
-    const { state, saveCreds } = await useMultiFileAuthState('auth_');
+    const { state, saveCreds } = await useMultiFileAuthState('auth_novo');
 
     // Recuperar lembretes
     const lembretesAntigos = await lembretesCollection.find({}).toArray();
