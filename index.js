@@ -1124,18 +1124,14 @@ async function start() {
         }
     });
 
+    sock.ev.on("creds.update", saveCreds);
+
     sock.ev.on("connection.update", async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log("Gerando QR Code...");
+            console.log("Gerando QR Code para o site...");
             qrCodeImagem = await qrcode.toDataURL(qr);
-            
-            
-            qrcode.toString(qr, { type: 'terminal', small: true }, function (err, str) {
-                console.log(str);
-                console.log("QRCODE");
-            });
         }
 
         if (connection === "close") {
@@ -1144,10 +1140,10 @@ async function start() {
                 console.log("Reconectando...");
                 start();
             } else {
-                console.log("Sessão expirada. Faça login novamente.");
+                console.log("Sessão expirada. Apague a pasta 'auth'.");
             }
         } else if (connection === "open") {
-            console.log("BCONECTADO\n");
+            console.log("CONECTADO \n");
             qrCodeImagem = null;
         }
     });
