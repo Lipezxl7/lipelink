@@ -24,8 +24,7 @@ const {
     downloadMediaMessage, 
     fetchLatestBaileysVersion, 
     BufferJSON,
-    useMultiFileAuthState,
-    makeCacheableSignalKeyStore, 
+    useMultiFileAuthState, 
     delay 
 } = require('@whiskeysockets/baileys');
 
@@ -46,6 +45,11 @@ const logger = P({ level: 'silent' });
 // Configurações de Banco e API
 const MONGO_URL = process.env.MONGODB_URI || "mongodb+srv://ylipe:%40Senha6614@cluster0.k9yi2p9.mongodb.net/?appName=Cluster0";
 const removeBgKey = process.env.removeBgKey;
+
+// --- NOVA CONFIGURAÇÃO DA API DE DOWNLOAD ---
+const RAPID_KEY = process.env.RAPID_KEY; 
+const RAPID_HOST = "download-all-in-one-ultimate.p.rapidapi.com";
+
 let chaveAtualIndex = 0;
 let qrCodeImagem = null;
 
@@ -379,6 +383,98 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
         return sock.sendMessage(de, { text: 'to on lendario' });
     }
 
+    
+    if (cmd === '!apps') {
+        const listaApps = 
+            `🌐 *APPS QUE FUNCIONAM* 🌐\n\n` +
+            `Você pode baixar vídeos e mídias de:\n\n` +
+            `📸 *Instagram* (Reels, IGTV, Fotos)\n` +
+            `🎵 *TikTok & Kwai*\n` +
+            `📌 *Pinterest*\n` +
+            `📘 *Facebook*\n` +
+            `🐦 *Twitter / X*\n` +
+            `🔴 *YouTube*\n` +
+            `👻 *Snapchat & Threads*\n\n` +
+            `⚠️ *Lembrete:* O perfil do link enviado deve ser *PÚBLICO*.`;
+        
+        return sock.sendMessage(de, { text: listaApps });
+    }
+
+   
+    if (cmd.startsWith('!baixar ')) {
+        const urlMidia = txt.slice(8).trim();
+        if (!urlMidia) return sock.sendMessage(de, { text: ' Cole o link! Ex: *!baixar https://instagram.com/...*' });
+
+        await sock.sendPresenceUpdate('composing', de);
+        await sock.sendMessage(de, { text: '⏳ *Abaixando...*' }, { quoted: msg });
+
+        try {
+            const res = await axios.get(`https://${RAPID_HOST}/autolink`, {
+                params: { url: urlMidia },
+                headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST }
+            });
+
+            const dados = res.data;
+            let linkFinal = null;
+
+            
+            if (dados.medias && dados.medias.length > 0) {
+                
+                const videoTarget = dados.medias.find(m => 
+                    (m.quality && m.quality.includes('no_watermark')) || 
+                    (m.extension && m.extension.includes('mp4')) || 
+                    (m.type && m.type.includes('video'))
+                );
+                if (videoTarget) linkFinal = videoTarget.url;
+            }
+
+            
+            if (!linkFinal && dados.url && !dados.url.includes('www.tiktok.com')) linkFinal = dados.url;
+            if (!linkFinal && dados.link && !dados.link.includes('www.tiktok.com')) linkFinal = dados.link;
+
+            if (linkFinal) {
+                const respostaMidia = await axios.get(linkFinal, { 
+                    responseType: 'arraybuffer',
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Accept': '*/*'
+                    }
+                });
+                
+                const bufferMidia = Buffer.from(respostaMidia.data);
+                await sock.sendPresenceUpdate('paused', de);
+
+                
+                if (bufferMidia.length < 50000) {
+                    const textoErro = bufferMidia.toString('utf-8').substring(0, 300);
+                    return sock.sendMessage(de, { 
+                        text: `\nO download foi bloqueado pela rede social.\n\n*Resposta:* ${textoErro}` 
+                    }, { quoted: msg });
+                }
+                
+                
+                return sock.sendMessage(de, { 
+                    video: bufferMidia, 
+                    caption: ` *Download Concluído!*`,
+                    mimetype: 'video/mp4'
+                }, { quoted: msg });
+
+            } else {
+                const erroMsg = (dados.message || "").toLowerCase();
+                if (erroMsg.includes('private') || dados.status === 204) {
+                    return sock.sendMessage(de, { text: '🔒 *ERRO: CONTA PRIVADA*\n\nEste vídeo pertence a uma conta privada ou restrita.' });
+                }
+                
+                return sock.sendMessage(de, { text: `⚠️ *Vídeo não encontrado no servidor.* (Não havia MP4 na resposta da API).` });
+            }
+
+        } catch (e) {
+            console.log("Erro no !baixar:", e.message);
+            return sock.sendMessage(de, { text: ` Falha ao tentar conectar na API: ${e.message}` });
+        }
+    }
+    // ------------------------------------
+
     if (cmd === '!menu') {
         const lista =
             ` *MENU DO LIPELINK ✅* \n\n` +
@@ -389,6 +485,8 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
             `🎨 !logo [nome] - Cria uma logo com IA\n\n\n` +
 
             `*FERRAMENTAS ÚTEIS*\n` +
+            `📥 !baixar [link] - Baixa de qualquer rede\n` + 
+            `🌐 !apps - Lista de apps do !baixar\n` + 
             `📝 !pdf [foto] - Converte foto para pdf\n` +
             `🖌️ !bg [foto] - Remove fundo de imagem\n` +
             `📦 !cep [número] - Consulta CEP\n` +
@@ -476,7 +574,7 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
                     model: "llama-3.3-70b-versatile",
                     messages: [{
                             role: "system",
-                            content: "Você é um assistente que organiza textos extraídos de imagens via OCR. Sua tarefa é pegar o texto bagunçado e organizar exatamente como estaria na imagem original (listas, menus, recibos, etc). Remova símbolos desnecessários do OCR e mantenha apenas a informação útil. Se houver preços, mantenha-os alinhados."
+                            content: "Você é um assistente que organiza textos extraídos de imagens via OCR. Sua tarefa é pegar o texto bagunçado e organizar exatamente como estaria na imagem original (listas, menus, recibos, etc). Remova símbolos desnecessários do OCR e mantenha apenas a informação útil. Se houver preços, mantenha-os alinhados, NAO MANDE INFORMACOES SUAS SOMENTE O QUE ESTIVER NA IMAGEM, se voce nao conseguir entender mande 'desculpa nao cconseguir ler a imagem'."
                         },
                         {
                             role: "user",
@@ -989,16 +1087,7 @@ if (cmd === '!inbox') {
 // INICIALIZAÇÃO 
 
 async function start() {
-    console.log("🔄 Iniciando Bot...");
-
-    
-    const nomePastaSessao = 'auth_sessao_blindada';
-    if (fs.existsSync(nomePastaSessao)) {
-        console.log(" Limpando sessão antiga...");
-        fs.rmSync(nomePastaSessao, { recursive: true, force: true });
-    }
-
-    console.log("Conectando ao MongoDB (Dados)...");
+    console.log("Conectando ao MongoDB...");
     const mongoClient = new MongoClient(MONGO_URL, { family: 4 });
     await mongoClient.connect();
     
@@ -1006,47 +1095,47 @@ async function start() {
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
-    
-    const { state, saveCreds } = await useMultiFileAuthState(nomePastaSessao);
+    const { state, saveCreds } = await useMultiFileAuthState('auth_novo');
 
+    // Recuperar lembretes
+    const lembretesAntigos = await lembretesCollection.find({}).toArray();
+
+    // Iniciar Baileys
     const { version } = await fetchLatestBaileysVersion();
-    
     const sock = makeWASocket({
-        version,
-        logger: P({ level: "silent" }),
+        auth: state,
         printQRInTerminal: true,
-        browser: ["LipeBot", "Chrome", "10.0"],
-        
-        auth: {
-            creds: state.creds,
-            // O makeCacheableSignalKeyStore impede que as chaves se percam
-            keys: makeCacheableSignalKeyStore(state.keys, P({ level: "silent" })),
-        },
-        generateHighQualityLinkPreview: true,
-        syncFullHistory: false, // Deixa false para não travar baixando conversa antiga
-        connectTimeoutMs: 60000,
+        browser: ["Lipelink", "Chrome", "10.0"],
+        version,
+        logger: P({ level: "silent" })
     });
 
-    // Lembretes...
-    const lembretesAntigos = await lembretesCollection.find({}).toArray();
+    // Reagendar lembretes com o socket ativo
     lembretesAntigos.forEach(lembrete => {
         const dataAlvo = new Date(lembrete.dataAlvo);
         if (dataAlvo > new Date()) {
             schedule.scheduleJob(dataAlvo, async () => {
-                await sock.sendMessage(lembrete.chatId, { text: '⏰ *LEMBRETE:* ' + lembrete.mensagem });
+                await sock.sendMessage(lembrete.chatId, { text: '*AVISO DE LEMBRETE RECUPERADO:* ' + lembrete.mensagem });
                 await lembretesCollection.deleteOne({ _id: lembrete._id });
             });
+        } else {
+            sock.sendMessage(lembrete.chatId, { text: '*LEMBRETE ATRASADO:* ' + lembrete.mensagem });
+            lembretesCollection.deleteOne({ _id: lembrete._id });
         }
     });
-
-    sock.ev.on("creds.update", saveCreds);
 
     sock.ev.on("connection.update", async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log("Escaneie o QR Code");
+            console.log("Gerando QR Code...");
             qrCodeImagem = await qrcode.toDataURL(qr);
+            
+            
+            qrcode.toString(qr, { type: 'terminal', small: true }, function (err, str) {
+                console.log(str);
+                console.log("QRCODE");
+            });
         }
 
         if (connection === "close") {
@@ -1055,11 +1144,10 @@ async function start() {
                 console.log("Reconectando...");
                 start();
             } else {
-                console.log("Reiniciando...");
-                start();
+                console.log("Sessão expirada. Faça login novamente.");
             }
         } else if (connection === "open") {
-            console.log("BCONECTADO");
+            console.log("BCONECTADO\n");
             qrCodeImagem = null;
         }
     });
@@ -1069,7 +1157,6 @@ async function start() {
         if (!msg.message || msg.key.fromMe) return;
         const de = msg.key.remoteJid;
         const txt = pegarTextoMensagem(msg);
-        
         if (txt) await tratarComandos(sock, de, msg, txt, lembretesCollection, historicoCollection);
     });
 }
