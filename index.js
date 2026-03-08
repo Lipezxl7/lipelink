@@ -7,6 +7,7 @@ const express = require('express');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const msgRetryMap = new Map();
 const axios = require('axios');
 const sharp = require('sharp');
 const P = require('pino');
@@ -18,6 +19,7 @@ const translate = require('@iamtraction/google-translate');
 const qrcode = require('qrcode');
 const FormData = require('form-data');
 const { MongoClient } = require('mongodb');
+const { removeBackground } = require('@imgly/background-removal-node'); // NOVO: Importação do imgly
 const { 
     default: makeWASocket, 
     DisconnectReason, 
@@ -25,7 +27,8 @@ const {
     fetchLatestBaileysVersion, 
     BufferJSON,
     useMultiFileAuthState, 
-    delay 
+    delay,
+    makeInMemoryStore // NOVO: Importação do Store para salvar os contatos
 } = require('@whiskeysockets/baileys');
 
 // Configuração Global Crypto
@@ -35,6 +38,15 @@ if (!global.crypto) {
 
 // Configuração FFMPEG
 ffmpeg.setFfmpegPath(ffmpegPath);
+
+
+process.on('uncaughtException', (err) => {
+    console.error('Erro Crítico (Ignorado para não derrubar o bot):', err.message);
+});
+
+process.on('unhandledRejection', (err) => {
+    console.error('Rejeição Não Tratada (Ignorada):', err.message);
+});
 
 // ============================================================
 // 2. VARIÁVEIS GLOBAIS E ESTADOS
@@ -51,6 +63,15 @@ const RAPID_KEY = process.env.RAPID_KEY;
 const RAPID_HOST = "download-all-in-one-ultimate.p.rapidapi.com";
 
 let chaveAtualIndex = 0;
+
+const chavesEleven = [
+    process.env.ELEVENLABS_API_KEY1,
+    process.env.ELEVENLABS_API_KEY2,
+    process.env.ELEVENLABS_API_KEY3,
+    process.env.ELEVENLABS_API_KEY4,
+    process.env.ELEVENLABS_API_KEY5
+].filter(Boolean); 
+
 let qrCodeImagem = null;
 
 // Mapas de Memória (Estados)
@@ -668,28 +689,57 @@ async function tratarComandos(sock, de, msg, txt, lembretesCollection, historico
             });
         }
     }
-    // Tradutor Humanizado
     
-    // Tradutor Humanizado (CORRIGIDO)
+   
     if (cmd.startsWith('!ta ')) {
-        // CORREÇÃO AQUI: Criamos a variável pegando tudo depois do "!ta "
         const texto = txt.slice(4).trim(); 
         
         if (!texto) return sock.sendMessage(de, { text: ' O que devo falar? Digite: !ta Olá mundo' });
 
-        try {
-            // URL do Google TTS
-            const googleURL = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=pt&q=${encodeURIComponent(texto)}`;
+        await sock.sendMessage(de, { text: '*Gravando áudio...*' });
 
-            await sock.sendMessage(de, { 
-                audio: { url: googleURL }, 
-                mimetype: 'audio/mp4', 
-                ptt: true // Envia como nota de voz (azulzinha)
-            });
+        const voiceId = "IKne3meq5aSn9XLyUdCD"; 
+        let sucesso = false;
+        let tentativas = 0;
 
-        } catch (e) {
-            console.log(e);
-            return sock.sendMessage(de, { text: ' Erro ao gerar o áudio.' });
+        
+        while (!sucesso && tentativas < chavesEleven.length) {
+            try {
+                const apiKey = chavesEleven[chaveAtualIndex];
+                
+                const audioRes = await axios({
+                    method: 'post',
+                    url: `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+                    data: { 
+                        text: texto, 
+                        model_id: "eleven_multilingual_v2", 
+                        voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+                    },
+                    headers: { 
+                        'xi-api-key': apiKey.trim(), 
+                        'Content-Type': 'application/json' 
+                    },
+                    responseType: 'arraybuffer'
+                });
+
+                await sock.sendMessage(de, { 
+                    audio: Buffer.from(audioRes.data), 
+                    mimetype: 'audio/mp4', 
+                    ptt: true 
+                });
+                
+                sucesso = true; 
+
+            } catch (e) {
+                console.log(`Chave ElevenLabs ${chaveAtualIndex + 1} falhou/sem saldo. Pulando para a próxima...`);
+                chaveAtualIndex = (chaveAtualIndex + 1) % chavesEleven.length;
+                tentativas++;
+            }
+        }
+
+        
+        if (!sucesso) {
+            return sock.sendMessage(de, { text: 'sem créditos' });
         }
     }
 
@@ -1095,7 +1145,8 @@ async function start() {
     const lembretesCollection = db.collection("lembretes");
     const historicoCollection = db.collection("historico_conversas");
 
-    const { state, saveCreds } = await useMultiFileAuthState('auth_novo');
+    const authCollection = db.collection("auth_whatsapp"); 
+    const { state, saveCreds } = await useMongoDBAuthState(authCollection);
 
     // Recuperar lembretes
     const lembretesAntigos = await lembretesCollection.find({}).toArray();
@@ -1107,6 +1158,10 @@ async function start() {
         printQRInTerminal: true,
         browser: ["Lipelink", "Chrome", "10.0"],
         version,
+        msgRetryCounterCache: msgRetryMap,
+        getMessage: async (key) => {
+            return { conversation: 'Lipelink bot' };
+        },
         logger: P({ level: "silent" })
     });
 
