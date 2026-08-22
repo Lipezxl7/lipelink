@@ -8,16 +8,6 @@ O **LipeLink** é um bot de WhatsApp feito com **Baileys** e pensado para estudo
 
 Também existe uma página simples em Express para mostrar o status do bot e, quando necessário, o QR Code de conexão.
 
-## Destaques
-
-- Conversa com IA em texto e voz
-- Geração de imagem com IA
-- OCR de imagem e transcrição de áudio
-- Download de mídias de redes sociais compatíveis
-- Ferramentas úteis como CEP, clima, link curto, senha, QR Code e tradução
-- Conversão de imagens, vídeos, áudio e PDF
-- Lembretes salvos em arquivo JSON
-- Cache para CEP e cotação de moedas
 
 ## Como funciona
 
