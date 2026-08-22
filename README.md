@@ -1,49 +1,157 @@
+<!-- Header com Animação do Nome -->
 <div align="center">
-  <a href="https://github.com/Lipezxl7/lipelink">
-    <img src="https://raw.githubusercontent.com/Lipezxl7/lipelink/main/menu.jpg" alt="Logo LipeLink" width="90%" />
+  <a href="https://git.io/typing-svg">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=32&pause=1000&color=00C2FF&center=true&vCenter=true&width=500&lines=Eu+sou+Felipe" alt="Typing SVG" />
   </a>
 </div>
 
-O **LipeLink** é o meu projeto principal. Ele é um bot de WhatsApp feito para estudo e evolução prática em programação, automação e integrações com APIs.
+<br />
 
-## O que ele faz
+<div align="center">
+  <img src="https://media1.tenor.com/m/AeV8RamLwrYAAAAd/i%27m-out-on-the-porch-fexsh.gif" alt="Header animation" width="80%">
+</div>
 
-- Executa comandos automáticos no WhatsApp
-- Consulta CEP
-- Gera QR Code
-- Encurta links
-- Extrai texto de imagem
-- Conversa com IA
-- Remove fundo de imagem
-- Gera imagens e figurinhas
-- Converte vídeo em áudio
-- Converte imagem em PDF
-- Gera senha aleatória
-- Traduz texto
-- Consulta cotação de moeda
+<br />
 
+<p align="center">
+  Bot de WhatsApp criado para estudo, automação e testes com IA, mídia e utilitários.
+</p>
 
-## Comandos
+<div align="center">
+  <img src="https://github-readme-stats.vercel.app/api?username=Lipezxl7&show_icons=true&theme=transparent&hide_border=true&title_color=00C2FF&icon_color=00C2FF&text_color=c9d1d9" alt="GitHub stats" />
+  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Lipezxl7&layout=compact&theme=transparent&hide_border=true&title_color=00C2FF&text_color=c9d1d9" alt="Top languages" />
+</div>
 
-| Comando | Função |
-| --- | --- |
-| `!on` | Verifica se o bot está online |
-| `!cep` | Consulta CEP |
-| `!qr` | Gera um QR Code |
-| `!link` | Encurta um link |
-| `!ler` | Pega todo o texto da imagem |
-| `!ia` | Converse com a IA |
-| `!bg` | Remove o fundo da imagem |
-| `!img` | Faz imagem com IA |
-| `!mp3` | Transforma vídeo em áudio |
-| `!fig` | Cria figurinha de imagem |
-| `!fig2` | Cria figurinha de imagem quadrada |
-| `!pdf` | Transforma imagem em PDF |
-| `!senha [digitos]` | Gera senha aleatória |
-| `!tdr [texto]` | Traduz texto |
-| `!moeda` | Lista de cotação |
-| `!menu` | Mostra este menu |
+<br />
+
+## Sobre o projeto
+
+O **LipeLink** é um bot de WhatsApp feito com **Baileys** e pensado para estudo prático de programação. Ele junta automação, inteligência artificial, manipulação de mídia e utilitários em um só projeto.
+
+Também existe uma página simples em Express para mostrar o status do bot e, quando necessário, o QR Code de conexão.
+
+## Destaques
+
+- Conversa com IA em texto e voz
+- Geração de imagem com IA
+- OCR de imagem e transcrição de áudio
+- Download de mídias de redes sociais compatíveis
+- Ferramentas úteis como CEP, clima, link curto, senha, QR Code e tradução
+- Conversão de imagens, vídeos, áudio e PDF
+- Lembretes salvos em arquivo JSON
+- Cache para CEP e cotação de moedas
+
+## Como funciona
+
+- O bot conecta no WhatsApp com autenticação em múltiplos arquivos
+- Os lembretes são salvos localmente em JSON
+- O histórico da conversa é preservado por chat
+- Algumas funções usam serviços externos como IA, tradução, clima, remove.bg, tempmail e cotação
+- A raiz do projeto responde com uma página simples de status/QR
+
+## Tecnologias e bibliotecas
+
+- Node.js
+- Express
+- Baileys
+- Axios
+- Sharp
+- Fluent FFmpeg
+- FFmpeg Static
+- Node Schedule
+- PDF-Lib
+- Qrcode
+- Qrcode-terminal
+- Form-data
+- Pino
+- Dotenv
+
+## Competências aplicadas no projeto
+
+- Python
+- JavaScript
+- SQL
+- Git e GitHub
+- APIs
+- OpenCV
+- Inteligência Artificial
+- Machine Learning
+- Linux
+- Arduino
+- Programação Orientada a Objetos
+
+## Comandos principais
+
+### IA e conversa
+- `!ia` ativa o modo conversa com IA
+- `!ia_voz` ativa a resposta em áudio
+- `!sair` encerra o modo conversa
+- `!img [descrição]` gera imagem com IA
+- `!logo [texto]` cria uma logo simples com IA
+- `!ler [foto]` faz leitura de texto em imagem
+- `!txt [áudio]` transcreve áudio para texto
+
+### Ferramentas de mídia
+- `!baixar [link]` baixa mídias de redes compatíveis
+- `!apps` lista os apps suportados no download
+- `!pdf [foto]` adiciona imagem como página de PDF
+- `!gerarpdf` gera o PDF final
+- `!mp3 [vídeo]` extrai o áudio do vídeo
+- `!bg [foto]` remove o fundo da imagem
+- `!fig` cria figurinha de imagem ou vídeo
+- `!fig2` cria figurinha quadrada
+- `!ta [texto]` converte texto em áudio
+
+### Utilidades
+- `!cep [cep]` consulta endereço
+- `!clima [cidade]` consulta o clima da cidade
+- `!link [url]` encurta links
+- `!qr [texto]` gera QR Code
+- `!senha [tamanho]` gera senha aleatória
+- `!tdr [texto]` traduz texto
+- `!moeda` mostra cotação de moedas
+- `!wme [numero]` gera link direto do WhatsApp
+- `!tm` cria e-mail temporário
+- `!inbox` lê mensagens do e-mail temporário
+- `!lembrete` abre o menu de lembretes
+- `!on` verifica se o bot está online
+- `!git` mostra o link do repositório
+- `!menu` mostra o menu completo
+
+## Variáveis de ambiente
+
+Crie um arquivo `.env` com as chaves usadas pelo projeto:
+
+```env
+PORT=5000
+removeBgKey=suachave
+RAPID_KEY=suachave
+OPENWEATHER_API_KEY=suachave
+GROQ_API_KEY=suachave
+MISTRAL_API_KEY=suachave
+MISTRAL_API_KEY2=suachave
+ELEVENLABS_API_KEY1=suachave
+ELEVENLABS_API_KEY2=suachave
+ELEVENLABS_API_KEY3=suachave
+ELEVENLABS_API_KEY4=suachave
+ELEVENLABS_API_KEY5=suachave
+```
+
+## Como rodar
+
+```bash
+npm install
+node index.js
+```
+
+Depois, escaneie o QR Code que aparecer no terminal ou na página inicial do bot.
+
+## Estrutura de dados
+
+- `lipelink/` guarda a autenticação do WhatsApp
+- `data/lembretes.json` guarda os lembretes
+- `data/historico.json` guarda o histórico da IA
 
 ## Objetivo
 
-Construir base forte em desenvolvimento de software e evoluir cada vez mais como programador.
+Construir um bot útil para estudo, prática e experimentação com automação, IA e integração de serviços.
