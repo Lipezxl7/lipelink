@@ -44,19 +44,6 @@ Também existe uma página simples em Express para mostrar o status do bot e, qu
 - Pino
 - Dotenv
 
-## Competências aplicadas no projeto
-
-- Python
-- JavaScript
-- SQL
-- Git e GitHub
-- APIs
-- OpenCV
-- Inteligência Artificial
-- Machine Learning
-- Linux
-- Arduino
-- Programação Orientada a Objetos
 
 ## Comandos principais
 
