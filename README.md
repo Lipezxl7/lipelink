@@ -1,31 +1,3 @@
-<!-- Header com Animação do Nome -->
-<div align="center">
-  <a href="https://git.io/typing-svg">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=32&pause=1000&color=00C2FF&center=true&vCenter=true&width=500&lines=Eu+sou+Felipe" alt="Typing SVG" />
-  </a>
-</div>
-
-<br />
-
-<div align="center">
-  <img src="https://media1.tenor.com/m/AeV8RamLwrYAAAAd/i%27m-out-on-the-porch-fexsh.gif" alt="Header animation" width="80%">
-</div>
-
-<br />
-
-<p align="center">
-  Bot de WhatsApp criado para estudo, automação e testes com IA, mídia e utilitários.
-</p>
-
-<div align="center">
-  <img src="https://github-readme-stats.vercel.app/api?username=Lipezxl7&show_icons=true&theme=transparent&hide_border=true&title_color=00C2FF&icon_color=00C2FF&text_color=c9d1d9" alt="GitHub stats" />
-  <img src="https://github-readme-stats.vercel.app/api/top-langs/?username=Lipezxl7&layout=compact&theme=transparent&hide_border=true&title_color=00C2FF&text_color=c9d1d9" alt="Top languages" />
-</div>
-
-<br />
-
-## Sobre o projeto
-
 O **LipeLink** é um bot de WhatsApp feito com **Baileys** e pensado para estudo prático de programação. Ele junta automação, inteligência artificial, manipulação de mídia e utilitários em um só projeto.
 
 Também existe uma página simples em Express para mostrar o status do bot e, quando necessário, o QR Code de conexão.
