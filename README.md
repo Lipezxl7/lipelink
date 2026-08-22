@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://github.com/Lipezxl7/lipelink">
-    <img src="https://raw.githubusercontent.com/Lipezxl7/lipelink/main/menu.jpg" alt="Logo LipeLink" width="'100%" />
+    <img src="https://raw.githubusercontent.com/Lipezxl7/lipelink/main/menu.jpg" alt="Logo LipeLink" width="90%" />
   </a>
 </div>
 
