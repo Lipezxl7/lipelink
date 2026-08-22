@@ -1,3 +1,9 @@
+<div align="center">
+  <a href="https://github.com/Lipezxl7/lipelink">
+    <img src="https://raw.githubusercontent.com/Lipezxl7/lipelink/main/menu.jpg" alt="Logo LipeLink" width="80%" />
+  </a>
+</div>
+
 O **LipeLink** é um bot de WhatsApp feito com **Baileys** e pensado para estudo prático de programação. Ele junta automação, inteligência artificial, manipulação de mídia e utilitários em um só projeto.
 
 Também existe uma página simples em Express para mostrar o status do bot e, quando necessário, o QR Code de conexão.
