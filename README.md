@@ -27,25 +27,7 @@ Também existe uma página simples em Express para mostrar o status do bot e, qu
 - Algumas funções usam serviços externos como IA, tradução, clima, remove.bg, tempmail e cotação
 - A raiz do projeto responde com uma página simples de status/QR
 
-## Tecnologias e bibliotecas
-
-- Node.js
-- Express
-- Baileys
-- Axios
-- Sharp
-- Fluent FFmpeg
-- FFmpeg Static
-- Node Schedule
-- PDF-Lib
-- Qrcode
-- Qrcode-terminal
-- Form-data
-- Pino
-- Dotenv
-
-
-## Comandos principais
+## Comandos
 
 ### IA e conversa
 - `!ia` ativa o modo conversa com IA
