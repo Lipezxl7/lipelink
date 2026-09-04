@@ -30,6 +30,7 @@ Também existe uma página simples em Express para mostrar o status do bot e, qu
 
 ### Ferramentas de mídia
 - `!baixar [link]` baixa mídias de redes compatíveis
+- `!up [imagem]` gerar link de imagem 
 - `!apps` lista os apps suportados no download
 - `!pdf [foto]` adiciona imagem como página de PDF
 - `!gerarpdf` gera o PDF final
