@@ -99,6 +99,18 @@ app.get("/", (request, response) => {
 
 app.listen(process.env.PORT || 5000);
 
+// Ativa o status de digitando ou gravando por alguns segundos
+async function simularPresenca(sock, de, tipo = 'composing', tempoMs = 2000) {
+    try {
+        // tipo: 'composing' (digitando...) ou 'recording' (gravando áudio...)
+        await sock.sendPresenceUpdate(tipo, de);
+        await new Promise(resolve => setTimeout(resolve, tempoMs));
+    } catch (e) {
+        console.error('Erro ao simular presença:', e.message);
+    }
+}
+
+
 function pegarTextoMensagem(msg) {
     return (
         msg.message.conversation ||
@@ -160,6 +172,32 @@ function salvarJSON(caminho, dados) {
         console.log('Erro ao salvar JSON (' + caminho + '):', e.message);
     }
 }
+
+async function uploadParaCatbox(buffer, mimeType = 'image/jpeg') {
+  try {
+    let ext = 'jpg';
+    if (mimeType.includes('png')) ext = 'png';
+    else if (mimeType.includes('webp')) ext = 'webp';
+    else if (mimeType.includes('gif')) ext = 'gif';
+
+    const form = new FormData();
+    form.append('reqtype', 'fileupload');
+    form.append('fileToUpload', buffer, {
+      filename: `imagem_${Date.now()}.${ext}`,
+      contentType: mimeType
+    });
+
+    const response = await axios.post('https://catbox.moe/user/api.php', form, {
+      headers: form.getHeaders(),
+    });
+
+    return response.data; // Retorna o link direto (ex: https://files.catbox.moe/abc123.jpg)
+  } catch (error) {
+    console.error('Erro no upload:', error.message);
+    throw new Error('Falha ao gerar.');
+  }
+}
+
 
 async function converterAudioParaOgg(buffer) {
     const id = Date.now() + Math.floor(Math.random() * 9999);
@@ -543,6 +581,7 @@ async function tratarComandos(sock, de, msg, txt, lembretesStore, historicoStore
             `🎨 !logo [nome] - Cria uma logo com IA\n\n\n` +
 
             `*FERRAMENTAS ÚTEIS*\n` +
+            `🌐 !up - Faz upload de imagem e gera link público\n` +
             `📥 !baixar [link] - Baixa de qualquer rede\n` +
             `🌐 !apps - Lista de apps do !baixar\n` +
             `📝 !pdf [foto] - Converte foto para pdf\n` +
@@ -583,6 +622,56 @@ async function tratarComandos(sock, de, msg, txt, lembretesStore, historicoStore
         }
     }
 
+    if (cmd === '!up') {
+        await simularPresenca(sock, de, 'composing', 1000);
+        try {
+    
+            const isImage = msg.message?.imageMessage;
+            const isQuotedImage = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage;
+
+            if (!isImage && !isQuotedImage) {
+                return await sock.sendMessage(de, { 
+                    text: 'manda com !up ou marca a imagem junto com !up`.' 
+                 }, { quoted: msg });
+                }
+
+                await sock.sendMessage(de, { text: '*Aguarde...* Baixando imagem e gerando o link...' }, { quoted: msg });
+
+                // 2. Extrai o objeto da mensagem com a imagem
+                let mediaMsg = msg;
+                if (isQuotedImage) {
+                  mediaMsg = {
+                    message: msg.message.extendedTextMessage.contextInfo.quotedMessage
+                      };
+                }
+
+    // 3. Faz o download do Buffer da imagem usando a Baileys
+                const buffer = await downloadMediaMessage(
+                    mediaMsg,
+                 'buffer',
+                 {},
+                 { 
+                    logger,
+                    reuploadRequest: sock.updateMediaMessage 
+                 }
+                );
+
+                const mimeType = mediaMsg.message.imageMessage?.mimetype || 'image/jpeg';
+
+    // 4. Envia o buffer para a API do Catbox
+                const urlPublica = await uploadParaCatbox(buffer, mimeType);
+
+    // 5. Retorna o link gerado para o usuário
+                const resposta = `*Link Gerado*\n\n ${urlPublica}`;
+                await sock.sendMessage(de, { text: resposta }, { quoted: msg });
+
+              } catch (err) {
+                console.error('Erro no comando !up:', err);
+                await sock.sendMessage(de, { 
+                 text: 'erro, tente depois' 
+                }, { quoted: msg });
+        }
+    }    
     if (cmd === '!ia') {
         modoConversa.add(de);
         const msgAtivacao =
@@ -1311,4 +1400,3 @@ async function start() {
 
 console.log("BCONECTADO");
 start();
-
